@@ -294,6 +294,16 @@ main.darkbg .col{background:rgba(255,255,255,.06)}
   background:linear-gradient(135deg,transparent 50%,currentColor 50%,currentColor 60%,transparent 60%,transparent 70%,currentColor 70%,currentColor 80%,transparent 80%)}
 
 /* dialog */
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:-12px 0 30px}
+.qbtn{display:flex;align-items:center;gap:14px;background:var(--card);box-shadow:var(--shadow);border-radius:var(--radius);padding:16px 20px;text-align:left;color:inherit;transition:.15s}
+.qbtn:hover{transform:translateY(-2px)}
+.qbtn .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:#f1ebe2;flex:none}
+.qbtn b{display:block;font-size:20px;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;line-height:1.1}
+.qbtn small{display:block;font-size:12px;color:var(--sub);margin-top:2px}
+.qbtn .qp{margin-left:auto;font-size:20px;color:var(--accent)}
+#memoDlg textarea{width:100%;min-height:150px;border:none;outline:none;resize:vertical;font-size:16px;line-height:1.7;padding:14px 16px;border-radius:12px;color:#3a3530}
+#memoDlg .sw{display:flex;gap:8px;margin:12px 0 4px}#memoDlg .sw button{width:24px;height:24px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}#memoDlg .sw button.on{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:760px){.quick{gap:10px;margin:-14px 0 24px}.qbtn{padding:12px 14px;gap:10px}.qbtn .qi{width:34px;height:34px;font-size:16px}.qbtn b{font-size:18px}.qbtn small{font-size:11px}}
 dialog{border:none;border-radius:18px;background:var(--card);color:var(--text);width:min(560px,94vw);padding:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 dialog::backdrop{background:rgba(30,20,10,.35);backdrop-filter:blur(2px)}
 .dlg-cover{height:140px;background-size:cover;background-position:center;background-color:var(--accent-soft);position:relative}
@@ -397,6 +407,7 @@ dialog::backdrop{background:rgba(30,20,10,.35);backdrop-filter:blur(2px)}
 <dialog id="taskDlg"></dialog>
 <dialog id="catDlg"></dialog>
 <dialog id="typeDlg"></dialog>
+<dialog id="memoDlg"></dialog>
 <input type="file" id="fileIn" accept="image/*" hidden>
 
 <script>
@@ -628,6 +639,10 @@ function pHome(){
       <p class="lead" style="margin:0">未完了のタスクが ${S.tasks.filter(t=>t.status!=='done').length} 件あります。</p></div>
     </div>
     <div class="weather ${wxLight()?'light':''}" id="weather" style="${S.settings.wxBg?`background:${S.settings.wxBg}`:''}"><div class="msg">天気を読み込み中…</div></div>
+    <div class="quick">
+      <button class="qbtn" onclick="homeTask()"><span class="qi">✓</span><span><b>Task</b><small>タスクを追加</small></span><span class="qp">＋</span></button>
+      <button class="qbtn" onclick="homeMemo()"><span class="qi">📝</span><span><b>Memo</b><small>サッとメモ</small></span><span class="qp">＋</span></button>
+    </div>
     <div class="gallery">
       ${S.categories.map(c=>{const ts=tasksOf(c.id),dn=ts.filter(t=>t.status==='done').length,nx=ts.filter(t=>t.status!=='done');
         return `<button class="gcard" onclick="go('cat','${c.id}')">
@@ -726,6 +741,18 @@ function bindNote(el){const n=S.memos.find(x=>x.id===el.dataset.id);
 }
 function addNote(){const q=$('#qm'),v=q.value.trim();if(!v)return q.focus();
   const n={id:uid(),text:v,color:NOTE_COLORS[0],w:260,h:200,fs:14,at:Date.now()};placeNote(n,$('#notes').clientWidth);S.memos.push(n);save();render();}
+/* ホームからタスク・メモを追加 */
+function homeTask(){const c=cat(S.settings.lastCat)||S.categories.find(c=>c.name==='Work')||S.categories[0];if(!c)return newCat();
+  openTask(null,{id:uid(),catId:c.id,title:'',status:'todo',type:'',due:'',time:'',priority:'',note:'',image:'',fromHome:true})}
+let memoColor=NOTE_COLORS[0];
+function homeMemo(){const d=$('#memoDlg');
+  d.innerHTML=`<div class="dlg-body"><div style="display:flex;align-items:center;margin-bottom:10px"><b style="font-size:17px">📝 <span class="en" style="font-size:22px">Memo</span></b><span class="grow" style="flex:1"></span><button class="btn" onclick="$('#memoDlg').close()">×</button></div>
+    <textarea id="hm_text" placeholder="思いついたことをメモ…" style="background:${memoColor}"></textarea>
+    <div class="sw">${NOTE_COLORS.slice(0,7).map(c=>`<button style="background:${c}" class="${c===memoColor?'on':''}" onclick="memoColor='${c}';$('#hm_text').style.background='${c}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')"></button>`).join('')}</div>
+    <div class="row" style="margin-top:12px"><span class="lead" style="font-size:12px;margin:0">保存するとMemoのページに入ります</span><span class="grow"></span><button class="btn primary" onclick="saveHomeMemo()">保存</button></div></div>`;
+  d.showModal();const t=$('#hm_text');t.focus();t.onkeydown=e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey))saveHomeMemo()}}
+function saveHomeMemo(){const t=$('#hm_text'),v=t.value.trim();if(!v)return t.focus();
+  S.memos??=[];S.memos.push({id:uid(),text:v,color:memoColor,w:260,h:200,fs:14,at:Date.now()});save();$('#memoDlg').close();renderSide();renderTabbar();toast('Memoに追加しました')}
 /* 場所が決まっていないメモを空いている所に並べる */
 function placeNote(n,W){const G=16,step=20;
   for(let y=0;;y+=step)for(let x=0;x+n.w<=Math.max(W,n.w);x+=step){
@@ -1061,7 +1088,7 @@ function drawTaskDlg(){
 function keepFields(){const g=i=>document.getElementById(i)?.value;if(!g('f_title')&&g('f_title')!=='')return;
   Object.assign(draft,{title:g('f_title'),catId:g('f_cat'),status:g('f_status'),due:g('f_due'),time:g('f_time'),priority:g('f_pri'),note:g('f_note'),desc:g('f_desc')??'',type:g('f_type')??''})}
 function saveTask(){keepFields();if(!draft.title.trim()){$('#f_title').focus();return}
-  const isNew=draft._new;delete draft._new;
+  const isNew=draft._new;delete draft._new;const fh=draft.fromHome;delete draft.fromHome;if(fh){S.settings.lastCat=draft.catId;setTimeout(()=>toast(`${cat(draft.catId)?.name||''} に追加しました`))}
   if(isNew)S.tasks.push(draft);else Object.assign(S.tasks.find(t=>t.id===draft.id),draft);
   save();$('#taskDlg').close();render()}
 function delTask(){if(!confirm('このタスクを削除しますか？'))return;S.tasks=S.tasks.filter(t=>t.id!==draft.id);save();$('#taskDlg').close();render()}
