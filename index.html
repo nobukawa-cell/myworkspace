@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My Workspace">
+<meta name="theme-color" content="#f6f3ee">
+<title>My Workspace</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,500;1,500;1,600;1,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f3ee;--panel:#fbf9f6;--card:#ffffff;--text:#2b2a28;--sub:#8a857d;--line:#e8e2d9;
+  --accent:#b5835a;--accent-soft:#f1e6da;--late:#c8553d;
+  --todo:#b8b2a7;--doing:#d9a441;--review:#7f9bbd;--hold:#b39ab8;--done:#7a9e7e;
+  --shadow:0 1px 2px rgba(60,40,20,.05),0 6px 20px rgba(60,40,20,.06);
+  --radius:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1c1b19;--panel:#22211e;--card:#2a2825;--text:#ece8e1;--sub:#9b958b;--line:#3a3732;--accent:#d3a37a;--accent-soft:#3a3029;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25)}}
+:root[data-theme="dark"]{--bg:#1c1b19;--panel:#22211e;--card:#2a2825;--text:#ece8e1;--sub:#9b958b;--line:#3a3732;--accent:#d3a37a;--accent-soft:#3a3029;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:"Zen Kaku Gothic New",system-ui,"Hiragino Sans","Yu Gothic UI",sans-serif;font-size:14px;line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+
+/* sidebar */
+aside{background:var(--panel);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+.brand{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:26px;padding:0 10px 18px;letter-spacing:.5px}
+.nav-label{font-size:11px;color:var(--sub);letter-spacing:.12em;padding:16px 10px 6px}
+.nav{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;text-align:left;color:var(--text)}
+.nav:hover{background:var(--accent-soft)}
+.nav.on{background:var(--accent-soft);font-weight:700}
+.nav .ico{width:22px;text-align:center}
+.nav .cnt{margin-left:auto;font-size:11px;color:var(--sub)}
+.nav.add{color:var(--sub)}
+
+/* main */
+main{min-width:0}
+.en{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:1.14em;letter-spacing:.01em}
+.page{max-width:1080px;margin:0 auto;padding:36px 40px 80px}
+.hero{height:220px;border-radius:0 0 var(--radius) var(--radius);background-size:cover;background-position:center;position:relative}
+.hero{overflow:hidden}
+.hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;transition:none}
+.hero-btns{position:absolute;right:16px;bottom:14px;display:flex;gap:6px;opacity:0;transition:.2s;z-index:2}
+.hero:hover .hero-btns{opacity:1}
+.hero-btns button,.repos-bar button{background:rgba(255,255,255,.88);color:#333;padding:5px 12px;border-radius:20px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.hero-btns button:hover{background:#fff}
+.hero.repos .hero-btns{display:none}
+.hero.repos .hero-img{cursor:grab}
+.hero.repos .hero-img:active{cursor:grabbing}
+.hero.repos{outline:2px solid rgba(255,255,255,.7);outline-offset:-2px;transition:height .05s}
+.repos-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.5);color:#fff;padding:6px 16px;border-radius:20px;font-size:13px;pointer-events:none;backdrop-filter:blur(4px);animation:fadeout 2.5s 1.5s forwards}
+@keyframes fadeout{to{opacity:0}}
+.repos-bar{position:absolute;right:16px;bottom:14px;display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.92);color:#333;padding:6px 8px 6px 16px;border-radius:24px;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:3;font-size:12px;flex-wrap:wrap}
+.repos-bar label{display:flex;align-items:center;gap:6px}
+.repos-bar input[type=range]{width:110px;accent-color:#b5835a}
+.repos-bar button{box-shadow:none}
+.repos-bar .ok{background:#b5835a;color:#fff}
+.repos-bar .ghost{background:transparent}
+.hero+.page{padding-top:0}
+.page-icon{font-size:56px;margin-top:-36px;position:relative;line-height:1;cursor:pointer;display:inline-block}
+h1.title{font-size:32px;font-weight:700;margin:10px 0 4px;outline:none}
+.lead{color:var(--sub);margin:0 0 26px}
+.greet{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:44px;margin:8px 0 0;font-weight:500}
+
+/* gallery */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.gcard{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:transform .2s,box-shadow .2s;text-align:left;padding:0;display:block;width:100%}
+.gcard:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(60,40,20,.12)}
+.gcard .cv{height:120px;background-size:cover;background-position:center}
+.gcard .bd{padding:16px 18px 16px}
+.gcard .nm{font-weight:700;font-size:16px;display:flex;gap:8px;align-items:center}
+.bar{height:4px;background:var(--line);border-radius:4px;margin:10px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
+.gcard .mini{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcard.new{display:flex;align-items:center;justify-content:center;min-height:110px;border:1.5px dashed var(--line);background:transparent;box-shadow:none;color:var(--sub)}
+
+.section-h{display:flex;align-items:center;gap:10px;margin:34px 0 12px}
+.section-h h2{font-size:15px;margin:0}
+.section-h .s{color:var(--sub);font-size:12px}
+
+/* tasks */
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(180px,1fr);gap:14px;overflow-x:auto;padding-bottom:6px}
+.col{background:rgba(160,140,110,.07);border-radius:var(--radius);padding:12px;min-height:160px}
+.col.over{outline:2px dashed var(--accent)}
+.col-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin:2px 4px 10px}
+.pill{width:9px;height:9px;border-radius:50%}
+.task{background:var(--card);border-radius:10px;box-shadow:var(--shadow);margin-bottom:10px;cursor:pointer;overflow:hidden}
+.task img{display:block;width:100%;height:110px;object-fit:cover}
+.task .in{padding:10px 12px}
+.task .t{font-weight:500}
+.task.done .t{text-decoration:line-through;color:var(--sub)}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;font-size:11.5px;color:var(--sub)}
+.chip{background:var(--accent-soft);color:var(--accent);padding:1px 8px;border-radius:10px}
+.late{color:var(--late)}
+.quick{display:flex;gap:6px;margin-top:4px}
+.quick input{flex:1;min-width:0;border:none;background:transparent;padding:6px 4px;outline:none}
+.quick input::placeholder{color:var(--sub)}
+
+.list{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.li{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+.li:last-child{border-bottom:none}
+.li:hover{background:var(--accent-soft)}
+.li .cat{font-size:12px;color:var(--sub);margin-left:auto;white-space:nowrap}
+.check{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--sub);flex:none;display:grid;place-items:center;font-size:11px;color:#fff}
+.check.on{background:var(--done);border-color:var(--done)}
+.empty{color:var(--sub);text-align:center;padding:36px}
+
+/* calendar */
+.cal-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.cal-top .m{font-size:22px;font-weight:700;min-width:150px}
+.btn{padding:6px 14px;border-radius:20px;background:var(--card);box-shadow:var(--shadow);font-size:13px}
+.btn.primary{background:var(--accent);color:#fff}
+.tabs{margin-left:auto;display:flex;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:3px}
+.tabs button{padding:4px 14px;border-radius:16px;font-size:13px}
+.tabs button.on{background:var(--accent);color:#fff}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.cal .dw{font-size:11px;color:var(--sub);padding:8px;text-align:center;border-bottom:1px solid var(--line)}
+.cal .d{min-height:104px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;font-size:12px;cursor:pointer}
+.cal .d:nth-child(7n){border-right:none}
+.cal .d.other{opacity:.4}
+.cal .d .n{font-size:12px;color:var(--sub)}
+.cal .d.hol .n{color:var(--late)}
+.cal .d.sat .n{color:#4a78b5}
+.cal .holname{display:block;font-size:10.5px;color:var(--late);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal .d.today .n{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center}
+.ev{display:block;width:100%;text-align:left;font-size:11.5px;padding:1px 6px;border-radius:5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.gframe{width:100%;height:680px;border:none;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
+.hint{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
+.hint ol{padding-left:20px;margin:8px 0 14px}
+.hint input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+
+/* widgets */
+.top{display:flex;gap:24px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;margin-bottom:22px}
+.clock{text-align:center}
+.side-clock{display:flex;flex-direction:column;align-items:center;margin:0 0 18px;padding:14px 0 12px;border-bottom:1px solid var(--line)}
+.side-clock .flip{gap:3px}
+.side-clock .flip .tile{width:50px;height:60px;font-size:38px;line-height:60px;border-radius:8px}
+.side-clock .flip .colon{font-size:24px}
+.side-clock .date{font-size:11px;margin-top:8px;color:var(--sub)}
+.top-clock{display:flex;flex-direction:column;align-items:center;margin:4px 0 26px}
+.top-clock .flip .tile{width:64px;height:78px;font-size:50px;line-height:78px;border-radius:9px}
+.top-clock .flip .colon{font-size:38px}
+.top-clock .date{font-size:13px;margin-top:10px}
+main{transition:background-color .3s}
+main.darkbg{--text:#f2efe9;--sub:#bdb6ab;--line:rgba(255,255,255,.14);--card:rgba(255,255,255,.09);--accent-soft:rgba(255,255,255,.12);color:var(--text)}
+main.darkbg .col{background:rgba(255,255,255,.06)}
+.bgbtn{position:fixed;top:14px;right:18px;z-index:5;background:var(--card);box-shadow:var(--shadow);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--text)}
+.bgpop{position:fixed;top:52px;right:18px;z-index:6;background:#fff;color:#2b2a28;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:14px;width:248px}
+.bgpop .sw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:8px 0 12px}
+.bgpop .sw button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
+.bgpop .sw button.on{outline:2px solid #b5835a;outline-offset:2px}
+.bgpop .r{display:flex;align-items:center;gap:8px;font-size:12px}
+.bgpop input[type=color]{width:36px;height:28px;border:none;padding:0;background:none;cursor:pointer}
+.flip{display:flex;align-items:center;gap:6px}
+.flip .tile{position:relative;width:46px;height:56px;border-radius:7px;background:linear-gradient(#2b2b2b 50%,#1f1f1f 50%);color:#f2f2f2;
+  font:500 36px/56px "Courier New",ui-monospace,monospace;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.08)}
+.flip .tile::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.6)}
+.flip .tile.tick{animation:flip .35s ease}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(-80deg);filter:brightness(.7)}100%{transform:rotateX(0)}}
+.flip .colon{font-size:28px;font-weight:700;color:var(--text);margin:0 1px}
+.clock .date{font-size:12px;font-weight:700;margin-top:6px;letter-spacing:.02em}
+.weather{position:relative;background:#1b1b1b;color:#f4f4f4;border-radius:var(--radius);padding:26px 28px;display:grid;grid-template-columns:200px repeat(7,1fr);align-items:center;gap:6px;box-shadow:var(--shadow);margin-bottom:30px;overflow-x:auto}
+.weather .now{display:flex;align-items:center;gap:14px}
+.weather .city{font-weight:700;font-size:15px;letter-spacing:.06em;cursor:pointer}
+.weather .city small{display:block;font-weight:400;font-size:12px;opacity:.7;letter-spacing:.1em}
+.weather .temp{font-size:28px;font-weight:700;line-height:1.1}
+.weather .desc{font-size:12px;opacity:.8}
+.weather .day{text-align:center;min-width:72px}
+.weather .day b{display:block;font-size:13px;margin-bottom:6px;letter-spacing:.03em}
+.weather .day .i{font-size:26px;line-height:1.3}
+.weather .day .hi{font-size:13px;margin-top:4px}
+.weather .day .lo{font-size:12px;opacity:.65}
+.weather .wxbtn{position:absolute;top:10px;right:12px;font-size:12px;color:inherit;opacity:0;transition:.2s;background:rgba(127,127,127,.25);padding:3px 10px;border-radius:12px}
+.weather:hover .wxbtn{opacity:.9}
+.weather.light{color:#2b2a28}
+.weather .msg{grid-column:1/-1;opacity:.7;font-size:13px}
+.types{display:flex;gap:6px;flex-wrap:wrap;margin:-10px 0 20px}
+.types button{padding:4px 12px;border-radius:16px;background:var(--card);box-shadow:var(--shadow);font-size:12.5px}
+.types button.on{background:var(--accent);color:#fff}
+.types .tadd{background:transparent;box-shadow:none;border:1px dashed var(--line);color:var(--sub)}
+.types .x{color:var(--late);font-weight:700;margin-left:2px}
+.chip.type{background:rgba(127,155,189,.16);color:#5f7fa6}
+.gcals{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;align-items:center}
+.gcals .gdot{width:14px;height:14px;border-radius:4px;padding:0;flex:none}
+.gcals .gc{display:flex;align-items:center;gap:6px;background:var(--card);box-shadow:var(--shadow);padding:4px 6px 4px 12px;border-radius:16px;font-size:12.5px}
+.gcals .gc button{color:var(--sub);padding:0 4px}
+.gcals form{display:flex;gap:6px;flex:1;min-width:260px}
+.gcals input{flex:1;padding:6px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+@media (max-width:760px){.weather{grid-template-columns:repeat(7,72px);padding:20px}.weather .now{grid-column:1/-1;margin-bottom:12px}}
+
+/* Notion風テーブル */
+.vtabs{display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:8px;flex-wrap:wrap}
+.vtabs button{padding:5px 12px;border-radius:8px;color:var(--sub);font-size:13.5px}
+.vtabs button.on{background:var(--accent-soft);color:var(--text);font-weight:700}
+.vtabs .sp{flex:1}
+.vtabs .hidedone{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);cursor:pointer;margin-right:8px}
+.vtabs .new{background:#2f80ed;color:#fff;font-weight:700;padding:5px 14px}
+.ntable-wrap{overflow-x:auto}
+.ntable{width:100%;min-width:820px;border-collapse:collapse;font-size:14px}
+.ntable th{font-weight:400;color:var(--sub);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:13.5px;cursor:pointer;user-select:none}
+.ntable th .hi{opacity:.7;margin-right:6px}
+.ntable td{padding:5px 10px;border-bottom:1px solid var(--line);vertical-align:middle;height:44px}
+.ntable td+td,.ntable th+th{border-left:1px solid var(--line)}
+.ntable tr:hover td{background:rgba(127,127,127,.05)}
+.ntable .tname{display:flex;align-items:center;gap:4px}
+.ntable input.cell.tt{font-weight:700}
+.ntable tr.done input.cell.tt{text-decoration:line-through;color:var(--sub)}
+.rgrip{cursor:grab;color:var(--sub);opacity:0;padding:0 2px;user-select:none;font-size:14px}
+.ntable tr:hover .rgrip{opacity:.7}
+.ntable tr.dragging td{opacity:.4}
+.ntable tr.ins-top td{box-shadow:inset 0 2px 0 #2f80ed}
+.ntable tr.ins-bot td{box-shadow:inset 0 -2px 0 #2f80ed}
+.sortinfo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:8px 0 2px}
+.sortinfo button{color:var(--accent);font-size:12px;text-decoration:underline}
+.sortinfo span{margin-left:auto;opacity:.8}
+.ntable .tname .open{cursor:pointer;opacity:0;font-size:11.5px;font-weight:400;border:1px solid var(--line);border-radius:6px;padding:1px 8px;background:var(--card);color:var(--sub);margin-left:auto;white-space:nowrap}
+.ntable tr:hover .tname .open{opacity:1}
+.ntable tr.done .tname span.tt{text-decoration:line-through;color:var(--sub)}
+.ntable input.cell{width:100%;border:none;background:transparent;color:inherit;padding:4px 2px;outline:none;font-size:14px}
+.ntable input.cell:focus{background:var(--card);box-shadow:0 0 0 2px rgba(47,128,237,.35);border-radius:4px}
+.ntable input[type=date].cell{color:var(--sub)}
+.ntable input[type=date].cell.late{color:var(--late)}
+.ntable input.nodate:not(:focus){color:transparent}
+.ntable tr:hover input.nodate:not(:focus){color:var(--sub);opacity:.5}
+.spill{appearance:none;-webkit-appearance:none;border:none;border-radius:12px;padding:2px 12px 2px 24px;font-size:13.5px;cursor:pointer;background-repeat:no-repeat;background-position:10px 50%;background-size:8px 8px;outline:none}
+.tpill{appearance:none;-webkit-appearance:none;border:none;border-radius:5px;padding:3px 9px;font-size:13.5px;cursor:pointer;outline:none;max-width:100%}
+.tpill.none{background:transparent;color:var(--sub);opacity:0}
+.ntable tr:hover .tpill.none{opacity:.7}
+.addrow td{color:var(--sub);cursor:pointer;border-bottom:none}
+.addrow input{width:100%;border:none;background:transparent;outline:none;color:var(--text);padding:6px 2px}
+
+/* 自由配置のメモ・画像・動画 */
+.wlayer{position:absolute;inset:0;pointer-events:none;z-index:3}
+.wg{position:absolute;pointer-events:auto;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.14);overflow:hidden;display:flex;flex-direction:column;background:#000}
+.wg.moving{box-shadow:0 14px 40px rgba(0,0,0,.25);opacity:.95}
+.wg-memo{color:#3a3530}
+.wbar{display:flex;align-items:center;gap:4px;padding:4px 6px;font-size:11px;position:absolute;top:0;left:0;right:0;z-index:2;opacity:0;transition:.2s;background:rgba(255,255,255,.75);backdrop-filter:blur(4px);color:#555}
+.wg:hover .wbar,.wg.moving .wbar{opacity:1}
+.wg-memo .wbar{position:static;opacity:1;background:transparent}
+.wbar .grip{cursor:grab;padding:2px 6px;border-radius:6px;user-select:none;touch-action:none}
+.wbar .grip:hover{background:rgba(0,0,0,.07)}
+.wbar .wx{font-size:16px;line-height:1;padding:0 6px;color:#888}
+.wbar .wx:hover{color:var(--late)}
+.wbar .mc{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.15);opacity:0;transition:.2s}
+.wg:hover .mc{opacity:1}
+.wg textarea{flex:1;border:none;background:transparent;resize:none;outline:none;padding:2px 14px 14px;font-size:14px;line-height:1.7;color:inherit}
+.wg img,.wg video{width:100%;height:100%;object-fit:cover;display:block;cursor:grab;touch-action:none}
+.wg-video video{cursor:default;object-fit:contain;background:#000}
+.wg .rz{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;z-index:3;touch-action:none;
+  background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.35) 50%,rgba(0,0,0,.35) 60%,transparent 60%,transparent 70%,rgba(0,0,0,.35) 70%,rgba(0,0,0,.35) 80%,transparent 80%)}
+.wg-memo .rz{opacity:.5}
+
+/* メモページ */
+.quickmemo{display:flex;gap:10px;align-items:flex-end;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:22px}
+.quickmemo textarea{flex:1;border:none;background:transparent;outline:none;resize:none;font-size:15px;color:var(--text)}
+.notes{position:relative;min-height:220px}
+.note{position:absolute;border-radius:12px;box-shadow:0 4px 16px rgba(60,40,20,.1);display:flex;flex-direction:column;color:#3a3530;max-width:100%}
+.note.dark{color:#f2efe9}
+.note .nbar{display:flex;align-items:center;gap:3px;padding:6px 8px 0;font-size:11px}
+.note .nd{opacity:.55}
+.note .ngrip{cursor:grab;padding:0 4px 0 0;opacity:.45;font-size:13px;touch-action:none;user-select:none}
+.note .nbar{cursor:grab;touch-action:none}
+.note .nbar button,.note .nbar label{cursor:pointer}
+.note .mc,.note .fs,.note .wx{opacity:0;transition:.15s}
+.note:hover .mc,.note:hover .fs,.note:hover .wx{opacity:1}
+.note .mc{width:13px;height:13px;border-radius:50%;border:1px solid rgba(0,0,0,.18);padding:0;display:inline-block;position:relative;overflow:hidden;cursor:pointer}
+.note .mc.pick{background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)}
+.note .mc.pick input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.note .fs{font-size:11px;color:inherit;padding:0 3px}
+.note .wx{font-size:16px;line-height:1;padding:0 4px;color:inherit}
+.note textarea{flex:1;border:none;background:transparent;resize:none;outline:none;padding:6px 14px 16px;line-height:1.7;color:inherit}
+.note .rz{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;touch-action:none;opacity:.45;
+  background:linear-gradient(135deg,transparent 50%,currentColor 50%,currentColor 60%,transparent 60%,transparent 70%,currentColor 70%,currentColor 80%,transparent 80%)}
+
+/* dialog */
+dialog{border:none;border-radius:18px;background:var(--card);color:var(--text);width:min(560px,94vw);padding:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(30,20,10,.35);backdrop-filter:blur(2px)}
+.dlg-cover{height:140px;background-size:cover;background-position:center;background-color:var(--accent-soft);position:relative}
+.dlg-cover .pick{position:absolute;right:12px;bottom:10px;display:flex;gap:6px}
+.dlg-cover .pick button{background:rgba(255,255,255,.88);color:#333;font-size:12px;padding:4px 10px;border-radius:14px}
+.dlg-body{padding:18px 24px 22px}
+.dlg-body .tt{width:100%;font-size:22px;font-weight:700;border:none;background:transparent;outline:none;padding:0 0 8px}
+.prop{display:grid;grid-template-columns:96px 1fr;align-items:center;gap:6px 10px;margin:6px 0}
+.prop label{font-size:12px;color:var(--sub)}
+.prop input,.prop select,.dlg-body textarea{border:1px solid transparent;background:transparent;padding:5px 8px;border-radius:6px}
+.prop input:hover,.prop select:hover,.dlg-body textarea:hover,.prop input:focus,.dlg-body textarea:focus{border-color:var(--line);background:var(--bg);outline:none}
+.dlg-body textarea{width:100%;min-height:90px;margin-top:8px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.row .grow{flex:1}
+.link{color:var(--accent);font-size:13px;text-decoration:none}
+.danger{color:var(--late);font-size:13px}
+
+.covers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.covers button{height:54px;border-radius:8px;background-size:cover;background-position:center}
+.emojis{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.emojis button{font-size:20px;padding:4px;border-radius:6px}
+.emojis button:hover{background:var(--accent-soft)}
+
+.menu-btn{display:none}
+.tabbar,.scrim{display:none}
+@media (max-width:760px){
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .menu-btn{display:none}
+  .scrim{display:block;position:fixed;inset:0;background:rgba(20,15,10,.35);z-index:25;opacity:0;pointer-events:none;transition:.25s}
+  body.menu-open .scrim{opacity:1;pointer-events:auto}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:var(--panel);border-top:1px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-left,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-right,0px));backdrop-filter:blur(10px)}
+  .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 0;border-radius:10px;color:var(--sub);min-width:0}
+  .tabbar button span{font-size:20px;line-height:1.2}
+  .tabbar button small{font-size:12px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .tabbar button.on{color:var(--text);background:var(--accent-soft)}
+  .bgbtn{top:calc(10px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));font-size:0;padding:8px 10px}
+  .bgbtn::first-letter{font-size:16px}
+  .gcard.new{min-height:64px}
+  .gallery{grid-template-columns:1fr 1fr;gap:12px}
+  .gcard .bd{padding:12px 14px}
+  .greet{font-size:30px}
+  /* 表はスマホではカード型に */
+  .ntable{min-width:0}
+  .ntable colgroup,.ntable tr:first-child{display:none}
+  .ntable tr[data-id]{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .ntable tr[data-id] td{border:none!important;padding:0;height:auto;background:none!important;min-width:0}
+  .ntable tr[data-id] td:first-child{flex:1 1 100%;order:0}
+  .ntable tr[data-id] td:nth-child(2){order:1}
+  .ntable tr[data-id] td:nth-child(5){order:2}
+  .ntable tr[data-id] td:nth-child(4){order:3;margin-left:auto}
+  .ntable tr[data-id] td:nth-child(3){flex:1 1 100%;order:4}
+  .ntable tr[data-id] td:nth-child(3):has(input[value=""]){display:none}
+  .ntable tr[data-id] td:nth-child(4) input{width:auto;font-size:12.5px;padding:2px}
+  .ntable tr[data-id] td:nth-child(4) input.nodate{width:30px;color:transparent!important}
+  .ntable tr[data-id] td:nth-child(3) input{font-size:13px;color:var(--sub)}
+  .ntable .tname input{flex:1;min-width:0}
+  .tpill{font-size:12.5px}.spill{font-size:12.5px}
+  .tabbar .en{font-size:1em}
+  .note{height:auto!important;min-height:120px}
+  .ntable .rgrip{display:none}
+  .ntable .tname .open{opacity:1}
+  .ntable tr.addrow{display:block}
+  .ntable tr.addrow td{display:block}
+  .sortinfo span{display:none}
+  .tpill.none{opacity:.6}
+  /* メモは縦に並べる */
+  .notes{height:auto!important;display:flex;flex-direction:column;gap:12px}
+  .note{position:relative!important;left:auto!important;top:auto!important;width:100%!important}
+  .note .mc,.note .fs,.note .wx{opacity:1}
+  .note .rz{display:none}
+  .hero-btns{opacity:1}
+  .vtabs .hidedone{margin-right:0}
+  .app{grid-template-columns:1fr}
+  aside{position:fixed;inset:0 18% 0 0;z-index:30;transform:translateX(-100%);transition:.25s;box-shadow:var(--shadow);padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+  aside.open{transform:none}
+
+  .page{padding:56px 16px 60px}
+  .hero+.page{padding-top:0}
+  .board{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:1fr}
+  .cal .d{min-height:70px}
+  .greet{font-size:34px}
+}
+  .syncpill{position:fixed;top:calc(env(safe-area-inset-top) + 10px);right:14px;z-index:40;display:none;align-items:center;gap:6px;
+    background:#2b2a28;color:#fff;border:0;border-radius:20px;padding:8px 14px;font:500 13px var(--sans,inherit);box-shadow:0 6px 20px rgba(0,0,0,.2);cursor:pointer}
+  .syncpill.show{display:inline-flex}
+  .syncpill.busy{background:#5b6b7a}.syncpill.err{background:#b4543c}
+  .nav .sub{display:block;font-size:11px;opacity:.6;margin-top:1px}
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translateX(-50%);background:#2b2a28;color:#fff;padding:10px 20px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:50;font-size:14px;max-width:90vw;text-align:center}
+</style>
+</head>
+<body>
+<button class="menu-btn" onclick="toggleMenu()" aria-label="メニュー">☰</button>
+<div class="scrim" onclick="toggleMenu(false)"></div>
+<nav class="tabbar" id="tabbar"></nav>
+<div class="app">
+  <aside id="side"></aside>
+  <main id="main"></main>
+</div>
+
+<dialog id="taskDlg"></dialog>
+<dialog id="catDlg"></dialog>
+<dialog id="typeDlg"></dialog>
+<input type="file" id="fileIn" accept="image/*" hidden>
+
+<script>
+/* ============ カスタマイズ用の設定 ============ */
+const STATUSES=[
+  {id:'todo',label:'未着手',color:'var(--todo)'},
+  {id:'doing',label:'進行中',color:'var(--doing)'},
+  {id:'review',label:'確認中',color:'var(--review)'},
+  {id:'hold',label:'保留',color:'var(--hold)'},
+  {id:'done',label:'完了',color:'var(--done)'},
+];
+const COVERS=[
+  'linear-gradient(135deg,#f6d5c3,#e8b4a0 50%,#c98f7a)',
+  'linear-gradient(135deg,#dfe7d6,#b7c9a8 60%,#8fa98a)',
+  'linear-gradient(135deg,#d8e3ef,#a9bfd8 60%,#7f9bbd)',
+  'linear-gradient(135deg,#efe4cf,#dcc49b 60%,#c2a36f)',
+  'linear-gradient(135deg,#e9dcef,#c8b2d6 60%,#a58cbc)',
+  'linear-gradient(135deg,#2b2d42,#4a4e69 60%,#9a8c98)',
+  'linear-gradient(160deg,#fbe8e6 0%,#f7cac9 40%,#92a8d1 100%)',
+  'radial-gradient(circle at 30% 30%,#fff3d6,#f4c27a 50%,#d98e48)',
+];
+const EMOJIS='📁💼🏠📚✍️🎨💡🧘🏃🍳💰✈️🎵🛒🌿⭐️🧠📷❤️🗂️'.match(/\p{Extended_Pictographic}️?/gu);
+const WORK_TYPES=['定期タスク','新チーム','大黒柱','介護事業部','ポータルサイト','ケアカルテ','ケアコネ'];
+/* タスクの種類の見た目（ここにない種類は自動で色が付きます） */
+const TYPE_STYLE={
+  '定期タスク':{ico:'🔄',bg:'#d3e5f5',fg:'#2b5f8a'},
+  '新チーム':{ico:'★',bg:'#e6dcf1',fg:'#5b3f86'},
+  '大黒柱':{ico:'🌳',bg:'#dbe8dc',fg:'#3f6845'},
+  '介護事業部':{ico:'🤝',bg:'#f6e3c8',fg:'#8a5a1e'},
+  'ポータルサイト':{ico:'',bg:'#f5dcc8',fg:'#8a4f2a'},
+  'ケアカルテ':{ico:'📋',bg:'#f6d9dd',fg:'#8a3644'},
+  'ケアコネ':{ico:'🔗',bg:'#dbeceb',fg:'#2f6b67'},
+};
+const TYPE_AUTO=[['#e3e2de','#55534e'],['#eee0da','#7a4b3a'],['#fbecd0','#8a6116'],['#fbf3c9','#7a6612'],['#dbeddb','#2f6b3a'],['#d3e5ef','#2b5f7a'],['#e8deee','#5b3f76'],['#f5e0e9','#8a3a5c']];
+/* ステータスの見た目 */
+const STATUS_PILL={todo:['#f8dcd8','#b5423a','#e15a4f'],doing:['#d3e5f5','#2b5f8a','#3b82d6'],review:['#e6dcf1','#5b3f86','#9b6bd3'],hold:['#f1e7c8','#7a6115','#d0a72a'],done:['#dbe8dc','#3f6845','#5a9a63']};
+/* ============================================ */
+
+const KEY='myworkspace.v2';
+const uid=()=>(crypto.randomUUID?crypto.randomUUID():Date.now()+Math.random().toString(36).slice(2));
+const today=()=>{const d=new Date();return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const bg=v=>!v?COVERS[0]:(v.startsWith('linear')||v.startsWith('radial'))?v:`url('${v.replace(/'/g,'%27').replace(/"/g,'%22')}')`;
+
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S){
+  const w=uid(),p=uid(),l=uid(),t=today();
+  S={categories:[
+      {id:w,name:'Work',icon:'💼',cover:COVERS[2],types:[...WORK_TYPES]},
+      {id:p,name:'Private',icon:'🏠',cover:COVERS[0],types:[]},
+      {id:l,name:'Study',icon:'📚',cover:COVERS[1],types:[]}],
+    tasks:[
+      {id:uid(),catId:w,title:'企画書のたたき台を作る',status:'doing',due:t,time:'',priority:'高',note:'',image:''},
+      {id:uid(),catId:w,title:'週次ミーティングの資料',status:'todo',due:'',time:'',priority:'中',note:'',image:''},
+      {id:uid(),catId:p,title:'週末の買い物リスト',status:'todo',due:t,time:'',priority:'',note:'',image:''},
+      {id:uid(),catId:l,title:'本を1章読む',status:'done',due:'',time:'',priority:'',note:'',image:''}],
+    settings:{}};
+}
+/* 以前のデータを新しい形に合わせる */
+S.settings??={};
+if(!S.v3){
+  const EN={'仕事':'Work','プライベート':'Private','学び':'Study'};
+  S.categories.forEach(c=>{if(EN[c.name])c.name=EN[c.name];c.types??=[];if(c.name==='Work'&&!c.types.length)c.types=[...WORK_TYPES]});
+  if(S.settings.gcal&&!S.settings.gcals)S.settings.gcals=S.settings.gcal.split(/[\s,、]+/).filter(Boolean);
+  delete S.settings.gcal;S.v3=true;
+}
+S.categories.forEach(c=>c.types??=[]);
+S.settings.gcals??=[];
+S.memos??=[];
+if(S.widgets?.some(w=>w.kind==='memo')){S.widgets.filter(w=>w.kind==='memo').forEach(w=>{if(w.text)S.memos.unshift({id:w.id,text:w.text,color:w.color,w:260,h:220,fs:14,at:Date.now()})});S.widgets=S.widgets.filter(w=>w.kind!=='memo')}
+S.settings.weather??={name:'FUKUYAMA',lat:34.4858,lon:133.3626};
+if(!S.v4){S.categories.forEach(c=>{if(c.name==='Work'&&!c.types.includes('定期タスク'))c.types.unshift('定期タスク');c.view??='table'});S.v4=true}
+/* ---------- Notionから書き出したタスク（2026/11/12 取り込み分・最初に1回だけ反映） ---------- */
+const NOTION_IMPORT={"work":[],"private":[],"ideas":[]};
+function importNotion(){
+  if(S.notionImported)return 0;
+  const DEMO=['企画書のたたき台を作る','週次ミーティングの資料','週末の買い物リスト','本を1章読む'];
+  S.tasks=S.tasks.filter(t=>!DEMO.includes(t.title));
+  const catBy=(name,icon,cover)=>{let c=S.categories.find(x=>x.name===name);if(!c){c={id:uid(),name,icon,cover,types:[]};S.categories.push(c)}c.types??=[];return c};
+  let n=0;
+  [['work',catBy('Work','💼',COVERS[2])],['private',catBy('Private','🏠',COVERS[0])]].forEach(([k,c])=>{
+    NOTION_IMPORT[k].forEach(r=>{
+      if(r.type&&!c.types.includes(r.type))c.types.push(r.type);
+      if(S.tasks.some(t=>t.catId===c.id&&t.title===r.title))return;
+      S.tasks.push({id:uid(),catId:c.id,title:r.title,status:r.status,type:r.type,desc:r.desc,due:r.due,time:'',priority:r.priority,note:r.note,image:''});n++})});
+  S.memos??=[];NOTION_IMPORT.ideas.forEach(t=>{if(!S.memos.some(m=>m.text===t)){S.memos.push({id:uid(),text:t,color:'#fff6c7',w:260,h:200,fs:14,at:Date.now()});n++}});
+  S.notionImported=true;save();return n;
+}
+let route={v:'home'}, calMonth=new Date(), calTab='mine', typeFilter='', sortBy='status', typeEdit=false;
+function save(fromSync){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('保存容量がいっぱいです。大きな画像を減らすか、画像URLを使ってください。')}if(!fromSync&&booted)markDirty()}
+let booted=false;
+const cat=id=>S.categories.find(c=>c.id===id);
+const tasksOf=id=>S.tasks.filter(t=>t.catId===id);
+const isLate=t=>t.due&&t.due<today()&&t.status!=='done';
+
+/* ---------- sidebar ---------- */
+function renderSide(){
+  const open=S.tasks.filter(t=>t.status!=='done');
+  const todayN=open.filter(t=>t.due&&t.due<=today()).length;
+  $('#side').innerHTML=`
+   <div class="brand">My Workspace</div>
+   <div class="clock side-clock"><div class="flip" id="flip"></div><div class="date" id="clockDate"></div></div>
+   ${nav('home','🏡','Home')}
+   ${nav('today','☀️','Today',todayN||'')}
+   ${nav('memo','📝','Memo',(S.memos||[]).length||'')}
+   ${nav('calendar','🗓️','Calendar')}
+   <div class="nav-label">分類</div>
+   ${S.categories.map(c=>`<button class="nav ${route.v==='cat'&&route.id===c.id?'on':''}" onclick="go('cat','${c.id}')"><span class="ico">${c.icon||'<span style="opacity:.35">•</span>'}</span>${esc(c.name)}<span class="cnt">${tasksOf(c.id).filter(t=>t.status!=='done').length||''}</span></button>`).join('')}
+   <button class="nav add" onclick="newCat()"><span class="ico">＋</span>新しい分類</button>
+   <div class="nav-label">このページに置く</div>
+   <button class="nav" onclick="addMedia()"><span class="ico">🖼️</span>画像・動画</button>
+   <div class="nav-label">データ</div>
+   <button class="nav" onclick="exportData()"><span class="ico">⤓</span>バックアップを保存</button>
+   <button class="nav" onclick="importData()"><span class="ico">⤒</span>バックアップから復元</button>
+   ${syncEnabled()?`<button class="nav" id="syncBtn" onclick="syncClick()">${syncLabel()}</button>${SY.on?`<button class="nav" onclick="syncOff()"><span class="ico">⏻</span>同期をやめる</button>`:''}`:''}`;
+}
+function nav(v,ico,label,cnt=''){return `<button class="nav ${route.v===v?'on':''}" onclick="go('${v}')"><span class="ico">${ico}</span>${label}<span class="cnt">${cnt}</span></button>`}
+function toggleMenu(on){const a=$('#side');on=on??!a.classList.contains('open');a.classList.toggle('open',on);document.body.classList.toggle('menu-open',on)}
+function renderTabbar(){const t=$('#tabbar');if(!t)return;const it=(v,ico,l,id)=>`<button class="${route.v===v&&(!id||route.id===id)?'on':''}" onclick="go('${v}'${id?`,'${id}'`:''})"><span>${ico}</span><small>${l}</small></button>`;
+  const w=S.categories.find(c=>c.name==='Work')||S.categories[0];
+  t.innerHTML=it('home','🏡','Home')+it('today','☀️','Today')+(w?it('cat',w.icon||'📁',w.name,w.id):'')+it('memo','📝','Memo')+it('calendar','🗓️','Calendar')+`<button onclick="toggleMenu(true)"><span>☰</span><small>More</small></button>`;enify(t)}
+function go(v,id){toggleMenu(false);if(route.id!==id){typeFilter='';typeEdit=false}route={v,id};$('#side').classList.remove('open');render();scrollTo(0,0)}
+
+/* ---------- pages ---------- */
+function render(){renderSide();renderTabbar();tickClock(true);({home:pHome,today:pToday,memo:pMemo,calendar:pCal,cat:pCat})[route.v]();applyBg();renderWidgets();enify(document.body)}
+
+/* ---------- ページに自由に置けるメモ・画像・動画 ---------- */
+let mediaDB=null;const mediaURL={};
+function db(){return mediaDB||(mediaDB=new Promise((ok,ng)=>{const r=indexedDB.open('myworkspace-media',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>ok(r.result);r.onerror=()=>ng(r.error)}))}
+async function mediaPut(id,blob){const d=await db();return new Promise((ok,ng)=>{const tx=d.transaction('files','readwrite');tx.objectStore('files').put(blob,id);tx.oncomplete=ok;tx.onerror=()=>ng(tx.error)})}
+async function mediaBlob(id){const d=await db();return new Promise(ok=>{const r=d.transaction('files').objectStore('files').get(id);r.onsuccess=()=>ok(r.result||null);r.onerror=()=>ok(null)})}
+async function mediaGet(id){const u=await mediaGetLocal(id);if(u||!tokOK())return u;
+  try{const f=await gFind('m-'+id);if(f){const b=await (await gfetch(`${DAPI}/files/${f.id}?alt=media`)).blob();await mediaPut(id,b);mediaURL[id]=URL.createObjectURL(b);markUp(id)}}catch(e){}return mediaURL[id]}
+async function mediaGetLocal(id){if(mediaURL[id])return mediaURL[id];const d=await db();return new Promise(ok=>{const r=d.transaction('files').objectStore('files').get(id);r.onsuccess=()=>{if(r.result){mediaURL[id]=URL.createObjectURL(r.result)}ok(mediaURL[id])};r.onerror=()=>ok(null)})}
+async function mediaDel(id){const d=await db();d.transaction('files','readwrite').objectStore('files').delete(id);
+  if(tokOK())gFind('m-'+id).then(f=>f&&gfetch(`${DAPI}/files/${f.id}`,{method:'DELETE'})).catch(()=>{})}
+const MEMO_COLORS=['#fff6c7','#ffe0e0','#dff3e4','#dfeaf8','#efe3f7','#ffffff'];
+function spot(w){const m=$('#main');return {x:Math.max(20,m.clientWidth-w-60),y:Math.max(20,window.scrollY+90)}}
+function addMemo(){S.widgets??=[];const p=spot(260);S.widgets.push({id:uid(),page:bgKey(),kind:'memo',x:p.x,y:p.y,w:260,h:220,text:'',color:MEMO_COLORS[0]});save();renderWidgets();setTimeout(()=>document.querySelector('.wg:last-of-type textarea')?.focus())}
+function addMedia(){const f=document.createElement('input');f.type='file';f.accept='image/*,video/*';f.multiple=true;
+  f.onchange=async()=>{let k=0;for(const file of f.files){const id=uid();try{await mediaPut(id,file)}catch(e){alert('保存できませんでした：'+file.name);continue}
+    const video=file.type.startsWith('video');let w=320,h=video?180:240;
+    if(!video){try{const bm=await createImageBitmap(file);h=Math.round(w*bm.height/bm.width)}catch(e){}}
+    const p=spot(w);S.widgets??=[];S.widgets.push({id:uid(),page:bgKey(),kind:video?'video':'image',mediaId:id,x:p.x-k*24,y:p.y+k*24,w,h});k++}
+    save();renderWidgets()};f.click()}
+function renderWidgets(){
+  const m=$('#main');m.style.position='relative';m.querySelector('.wlayer')?.remove();
+  const ws=(S.widgets||[]).filter(w=>w.page===bgKey());if(!ws.length)return;
+  const L=document.createElement('div');L.className='wlayer';m.appendChild(L);
+  const maxX=m.clientWidth-60;
+  ws.forEach(w=>{const el=document.createElement('div');el.className='wg wg-'+w.kind;el.dataset.id=w.id;
+    Object.assign(el.style,{left:Math.min(w.x,maxX)+'px',top:w.y+'px',width:w.w+'px',height:w.h+'px',background:w.kind==='memo'?w.color:''});
+    el.innerHTML=`<div class="wbar"><span class="grip" title="ドラッグで移動">⠿ 移動</span><span style="flex:1"></span>
+      ${w.kind==='memo'?MEMO_COLORS.map(c=>`<button class="mc" style="background:${c}" data-color="${c}"></button>`).join(''):''}
+      <button class="wx" title="削除">×</button></div>
+      ${w.kind==='memo'?`<textarea placeholder="メモ…">${esc(w.text||'')}</textarea>`:w.kind==='image'?'<img alt="">':'<video controls playsinline loop></video>'}
+      <span class="rz" title="ドラッグで大きさを変更"></span>`;
+    L.appendChild(el);
+    if(w.mediaId)mediaGet(w.mediaId).then(u=>{const x=el.querySelector('img,video');if(u)x.src=u;else el.querySelector('.wbar').insertAdjacentHTML('afterend','<div class="empty">ファイルが見つかりません</div>')});
+    const ta=el.querySelector('textarea');if(ta)ta.oninput=()=>{w.text=ta.value;save()};
+    el.querySelectorAll('.mc').forEach(b=>b.onclick=()=>{w.color=b.dataset.color;el.style.background=w.color;save()});
+    el.querySelector('.wx').onclick=()=>{if(!confirm(w.kind==='memo'?'このメモを削除しますか？':'この画像・動画を削除しますか？'))return;
+      S.widgets=S.widgets.filter(x=>x!==w);if(w.mediaId&&!S.widgets.some(x=>x.mediaId===w.mediaId))mediaDel(w.mediaId);save();renderWidgets()};
+    drag(el.querySelector('.grip'),el,(dx,dy,o)=>{w.x=Math.max(0,o.x+dx);w.y=Math.max(0,o.y+dy);el.style.left=w.x+'px';el.style.top=w.y+'px'},()=>({x:el.offsetLeft,y:el.offsetTop}));
+    drag(el.querySelector('.rz'),el,(dx,dy,o,e)=>{w.w=Math.max(120,o.w+dx);w.h=e.shiftKey||w.kind==='memo'?Math.max(80,o.h+dy):Math.max(60,Math.round(o.h*w.w/o.w));if(e.shiftKey)w.h=Math.max(60,o.h+dy);el.style.width=w.w+'px';el.style.height=w.h+'px'},()=>({w:el.offsetWidth,h:el.offsetHeight}));
+    if(w.kind!=='memo')drag(el.querySelector('img,video'),el,(dx,dy,o)=>{w.x=Math.max(0,o.x+dx);w.y=Math.max(0,o.y+dy);el.style.left=w.x+'px';el.style.top=w.y+'px'},()=>({x:el.offsetLeft,y:el.offsetTop}),true);
+  });
+}
+function drag(handle,el,move,start,soft){if(!handle)return;
+  handle.addEventListener('pointerdown',e=>{if(e.button!==0)return;if(e.target!==handle&&e.target.closest('button,input,label,textarea'))return;if(soft&&handle.tagName==='VIDEO'&&e.offsetY>handle.clientHeight-44)return;
+    e.preventDefault();const sx=e.clientX,sy=e.clientY,o=start();el.classList.add('moving');handle.setPointerCapture(e.pointerId);
+    const mv=ev=>move(ev.clientX-sx,ev.clientY-sy,o,ev);
+    const up=()=>{handle.removeEventListener('pointermove',mv);handle.removeEventListener('pointerup',up);el.classList.remove('moving');save()};
+    handle.addEventListener('pointermove',mv);handle.addEventListener('pointerup',up)})}
+
+/* 英語の部分を「My Workspace」と同じ書体にする */
+const EN_SKIP=new Set(['SCRIPT','STYLE','INPUT','TEXTAREA','SELECT','OPTION','CODE','IFRAME']);
+function enify(root){
+  if(!root)return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    for(let e=n.parentElement;e&&e!==root.parentElement;e=e.parentElement){
+      if(EN_SKIP.has(e.tagName)||e.classList.contains('en')||e.classList.contains('flip')||e.classList.contains('brand')||e.classList.contains('greet')||e.isContentEditable)return NodeFilter.FILTER_REJECT}
+    return /[A-Za-z]/.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});
+  const nodes=[];while(w.nextNode())nodes.push(w.currentNode);
+  nodes.forEach(n=>{const f=document.createDocumentFragment();let last=0;const v=n.nodeValue;
+    v.replace(/[A-Za-z][A-Za-z0-9.,'&\- ]*[A-Za-z0-9.]|[A-Za-z]/g,(m,i)=>{if(i>last)f.append(v.slice(last,i));const sp=document.createElement('span');sp.className='en';sp.textContent=m;f.append(sp);last=i+m.length});
+    if(last<v.length)f.append(v.slice(last));n.replaceWith(f)});
+}
+
+/* ---------- ページごとの背景色 ---------- */
+const BG_SWATCHES=['','#ffffff','#f3ede4','#efe6dc','#f6e9e6','#fbeee0','#eef2e8','#e6efe9','#e7eef6','#ece8f3','#f3e8ee','#ece9e4','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#111111'];
+const bgKey=()=>route.v==='cat'?route.id:route.v;
+function lum(h){const n=parseInt(h.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function applyBg(){
+  S.settings.bg??={};const c=S.settings.bg[bgKey()]||'';const m=$('#main');
+  m.style.backgroundColor=c;m.classList.toggle('darkbg',!!c&&lum(c)<.25);
+  if(!$('#bgbtn'))document.body.insertAdjacentHTML('beforeend','<button class="bgbtn" id="bgbtn" onclick="toggleBgPop()">🎨 背景色</button>');
+  $('#bgpop')?.remove();
+}
+const WX_SWATCHES=['','#ffffff','#f3ede4','#e7eef6','#e6efe9','#f6e9e6','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#4a6fa5','#6b8f71','#b5835a','#c46a5a','#7a5c8e','#0e3b5c','#000000'];
+const wxLight=()=>!!S.settings.wxBg&&lum(S.settings.wxBg)>=.35;
+let bgKind='page';
+function toggleBgPop(kind='page'){
+  if($('#bgpop')){const same=bgKind===kind;$('#bgpop').remove();if(same)return}
+  bgKind=kind;const wx=kind==='wx';
+  const cur=wx?(S.settings.wxBg||''):(S.settings.bg[bgKey()]||'');
+  const sw=wx?WX_SWATCHES:BG_SWATCHES;
+  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="bgpop" ${wx?`style="top:${Math.max(10,$('#weather').getBoundingClientRect().top)}px;right:auto;left:${$('#weather').getBoundingClientRect().right-260}px"`:''}><b style="font-size:13px">${wx?'天気予報の背景色':'このページの背景色'}</b>
+    <div class="sw">${sw.map(c=>`<button title="${c||'標準'}" class="${c===cur?'on':''}" style="background:${c||(wx?'#1b1b1b':'linear-gradient(135deg,#f6f3ee 50%,#1c1b19 50%)')}" onclick="event.stopPropagation();setBg('${c}')"></button>`).join('')}</div>
+    <div class="r"><input type="color" value="${cur||(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div></div>`);
+}
+function setBg(c,keep){
+  if(bgKind==='wx'){S.settings.wxBg=c;save();const w=$('#weather');if(w){w.style.background=c;w.classList.toggle('light',wxLight())}}
+  else{S.settings.bg??={};if(c)S.settings.bg[bgKey()]=c;else delete S.settings.bg[bgKey()];save();
+    const m=$('#main');m.style.backgroundColor=c;m.classList.toggle('darkbg',!!c&&lum(c)<.25);}
+  if(!keep){const k=bgKind;$('#bgpop')?.remove();toggleBgPop(k)}}
+document.addEventListener('click',e=>{const p=$('#bgpop');if(p&&!p.contains(e.target)&&e.target.id!=='bgbtn'&&e.target.id!=='wxbtn')p.remove()});
+
+function pHome(){
+  const h=new Date().getHours();
+  const hello=h<11?'Good morning':h<18?'Good afternoon':'Good evening';
+  const up=S.tasks.filter(t=>t.status!=='done'&&t.due).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,6);
+  const d=new Date();
+  $('#main').innerHTML=`<div class="page">
+    <div class="top"><div>
+      <div class="lead" style="margin:0">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）</div>
+      <div class="greet">${hello}.</div>
+      <p class="lead" style="margin:0">未完了のタスクが ${S.tasks.filter(t=>t.status!=='done').length} 件あります。</p></div>
+    </div>
+    <div class="weather ${wxLight()?'light':''}" id="weather" style="${S.settings.wxBg?`background:${S.settings.wxBg}`:''}"><div class="msg">天気を読み込み中…</div></div>
+    <div class="gallery">
+      ${S.categories.map(c=>{const ts=tasksOf(c.id),dn=ts.filter(t=>t.status==='done').length,nx=ts.filter(t=>t.status!=='done');
+        return `<button class="gcard" onclick="go('cat','${c.id}')">
+        <div class="bd"><div class="nm">${c.icon?`<span>${c.icon}</span>`:''}${esc(c.name)}</div>
+        <div class="bar"><i style="width:${ts.length?dn/ts.length*100:0}%"></i></div>
+        <div class="mini">${nx.length?`次：${esc(nx[0].title)}`:'すべて完了 ✨'}</div>
+        <div class="mini">${dn}/${ts.length} 完了</div></div></button>`}).join('')}
+      <button class="gcard new" onclick="newCat()">＋ 新しい分類</button>
+    </div>
+    <div class="section-h"><h2>🗓️ 近い予定</h2><span class="s">期限が近い順</span></div>
+    ${listHTML(up,'期限付きのタスクはありません')}
+  </div>`;
+  drawWeather();
+}
+
+/* ---------- 時計 ---------- */
+let lastClock='';
+function tickClock(force){
+  const el=$('#flip');if(!el)return;
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  const str=p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+  if(force||!el.children.length){el.innerHTML=[0,1,2].map(i=>`<span class="tile"></span>${i<2?'<span class="colon">:</span>':''}`).join('');lastClock=''}
+  const tiles=el.querySelectorAll('.tile');
+  [0,1,2].forEach(i=>{const v=str.slice(i*2,i*2+2);if(tiles[i].textContent!==v){tiles[i].textContent=v;if(lastClock){tiles[i].classList.remove('tick');void tiles[i].offsetWidth;tiles[i].classList.add('tick')}}});
+  lastClock=str;
+  const ds=d.toLocaleDateString('en-US',{weekday:'long'})+' | '+d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const cd=$('#clockDate');if(cd.dataset.v!==ds){cd.dataset.v=ds;cd.innerHTML=`<span class="en">${ds}</span>`}
+}
+setInterval(tickClock,1000);
+
+/* ---------- 週間天気（Open-Meteo・APIキー不要） ---------- */
+let wx=null,wxAt=0;
+const WMO=c=>c===0?['☀️','clear sky']:c<=2?['🌤️','partly cloudy']:c===3?['☁️','cloudy']:c<=48?['🌫️','fog']:c<=57?['🌦️','drizzle']:c<=67?['🌧️','rain']:c<=77?['🌨️','snow']:c<=82?['🌦️','showers']:c<=86?['🌨️','snow showers']:['⛈️','thunderstorm'];
+async function drawWeather(){
+  const el=$('#weather');if(!el)return;
+  const w=S.settings.weather;
+  if(!wx||Date.now()-wxAt>30*6e4||wx._key!==w.lat+','+w.lon){
+    try{
+      const u=`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`;
+      wx=await (await fetch(u)).json();wx._key=w.lat+','+w.lon;wxAt=Date.now();
+    }catch(e){el.innerHTML=`<div class="msg">天気を取得できませんでした（インターネット接続を確認してください）</div>`;return}
+  }
+  const el2=$('#weather');if(!el2)return;
+  const [ci,cd]=WMO(wx.current.weather_code);
+  el2.innerHTML=`<button class="wxbtn" id="wxbtn" onclick="event.stopPropagation();toggleBgPop('wx')">🎨 背景色</button><div class="now"><div class="city" onclick="changeCity()" title="クリックで地域を変更">${esc(w.name)}<small>WEATHER</small></div>
+    <span style="font-size:30px">${ci}</span><div><div class="temp">${Math.round(wx.current.temperature_2m)}℃</div><div class="desc">${cd}</div></div></div>
+    ${wx.daily.time.map((t,i)=>{const d=new Date(t+'T00:00');return `<div class="day"><b>${d.toLocaleDateString('en-US',{weekday:'long'})}</b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
+      <div class="hi">${Math.round(wx.daily.temperature_2m_max[i])}℃</div><div class="lo">${Math.round(wx.daily.temperature_2m_min[i])}℃</div></div>`}).join('')}`;
+  enify(el2);
+}
+async function changeCity(){
+  const q=prompt('地域名を入力（例：福山、広島、東京）');if(!q)return;
+  try{const r=await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=ja`)).json();
+    const g=r.results?.[0];if(!g)return alert('見つかりませんでした');
+    const en=await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=en`)).json();
+    S.settings.weather={name:(en.results?.[0]?.name||g.name).toUpperCase(),lat:g.latitude,lon:g.longitude};save();drawWeather();
+  }catch(e){alert('地域を検索できませんでした')}
+}
+
+/* ---------- メモ ---------- */
+const NOTE_COLORS=['#fff6c7','#ffe0e0','#ffe6cc','#dff3e4','#dfeaf8','#efe3f7','#ffffff','#2b2a28'];
+function pMemo(){
+  $('#main').innerHTML=`<div class="page">
+    <h1 class="title">📝 <span class="en" style="font-size:40px">Memo</span></h1><p class="lead">思いついたことをパッと書いておく場所</p>
+    <div class="quickmemo"><textarea id="qm" rows="2" placeholder="メモを書いて Enter（改行は Shift+Enter）"></textarea><button class="btn primary" onclick="addNote()">追加</button></div>
+    <div class="notes" id="notes">${S.memos.length?'':'<div class="empty" style="width:100%">まだメモはありません</div>'}</div>
+  </div>`;
+  const box=$('#notes');layoutNotes(box.clientWidth);box.innerHTML+=S.memos.map(noteHTML).join('');fitNotes();
+  const q=$('#qm');q.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();addNote()}};q.focus();
+  document.querySelectorAll('.note').forEach(bindNote);
+}
+function noteHTML(n){const dark=lum(n.color)<.25;
+  return `<div class="note ${dark?'dark':''}" data-id="${n.id}" style="background:${n.color};width:${n.w}px;height:${n.h}px;left:${n.x}px;top:${n.y}px">
+    <div class="nbar"><span class="ngrip" title="ドラッグで移動">⠿</span><span class="nd">${new Date(n.at).toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'})}</span><span style="flex:1"></span>
+      ${NOTE_COLORS.map(c=>`<button class="mc" style="background:${c}" data-color="${c}" title="背景色"></button>`).join('')}
+      <label class="mc pick" title="好きな色"><input type="color" value="${n.color}"></label>
+      <button class="fs" data-d="-1" title="文字を小さく">A-</button><button class="fs" data-d="1" title="文字を大きく">A+</button>
+      <button class="wx" title="削除">×</button></div>
+    <textarea style="font-size:${n.fs}px">${esc(n.text)}</textarea>
+    <span class="rz" title="ドラッグで大きさを変更"></span></div>`}
+function bindNote(el){const n=S.memos.find(x=>x.id===el.dataset.id);
+  const ta=el.querySelector('textarea');ta.oninput=()=>{n.text=ta.value;n.at=Date.now();save()};
+  const setColor=c=>{n.color=c;el.style.background=c;el.classList.toggle('dark',lum(c)<.25);save()};
+  el.querySelectorAll('button.mc').forEach(b=>b.onclick=()=>setColor(b.dataset.color));
+  el.querySelector('.pick input').oninput=e=>setColor(e.target.value);
+  el.querySelectorAll('.fs').forEach(b=>b.onclick=()=>{n.fs=Math.min(32,Math.max(10,n.fs+ +b.dataset.d*2));ta.style.fontSize=n.fs+'px';save()});
+  el.querySelector('.wx').onclick=()=>{if(n.text&&!confirm('このメモを削除しますか？'))return;S.memos=S.memos.filter(x=>x!==n);save();render()};
+  drag(el.querySelector('.rz'),el,(dx,dy,o)=>{n.w=Math.max(160,o.w+dx);n.h=Math.max(120,o.h+dy);el.style.width=n.w+'px';el.style.height=n.h+'px';fitNotes()},()=>({w:el.offsetWidth,h:el.offsetHeight}));
+  const mv=(dx,dy,o)=>{n.x=Math.max(0,o.x+dx);n.y=Math.max(0,o.y+dy);el.style.left=n.x+'px';el.style.top=n.y+'px';fitNotes()},st=()=>{el.parentNode.appendChild(el);return {x:el.offsetLeft,y:el.offsetTop}};
+  drag(el.querySelector('.ngrip'),el,mv,st);drag(el.querySelector('.nbar'),el,mv,st,true);
+}
+function addNote(){const q=$('#qm'),v=q.value.trim();if(!v)return q.focus();
+  const n={id:uid(),text:v,color:NOTE_COLORS[0],w:260,h:200,fs:14,at:Date.now()};placeNote(n,$('#notes').clientWidth);S.memos.push(n);save();render();}
+/* 場所が決まっていないメモを空いている所に並べる */
+function placeNote(n,W){const G=16,step=20;
+  for(let y=0;;y+=step)for(let x=0;x+n.w<=Math.max(W,n.w);x+=step){
+    if(!S.memos.some(m=>m!==n&&m.x!=null&&x<m.x+m.w+G&&x+n.w+G>m.x&&y<m.y+m.h+G&&y+n.h+G>m.y)){n.x=x;n.y=y;return}}}
+function layoutNotes(W){let ch=false;S.memos.forEach(n=>{if(n.x==null){placeNote(n,W);ch=true}});if(ch)save()}
+function fitNotes(){const b=$('#notes');if(b)b.style.height=Math.max(220,...S.memos.map(n=>n.y+n.h))+40+'px'}
+
+function pToday(){
+  const ts=S.tasks.filter(t=>t.status!=='done'&&t.due&&t.due<=today()).sort((a,b)=>a.due.localeCompare(b.due));
+  const done=S.tasks.filter(t=>t.status==='done'&&t.due===today());
+  $('#main').innerHTML=`<div class="hero" style="background-image:${COVERS[7]}"></div><div class="page">
+    <div class="page-icon">☀️</div><h1 class="title en" style="font-size:40px">Today</h1>
+    <p class="lead">今日が期限のタスクと、期限切れのタスク</p>
+    ${listHTML(ts,'今日やるべきタスクはありません 🎉')}
+    ${done.length?`<div class="section-h"><h2>完了したもの</h2></div>${listHTML(done)}`:''}
+  </div>`;
+}
+
+function listHTML(ts,empty='タスクがありません'){
+  if(!ts.length)return `<div class="list"><div class="empty">${empty}</div></div>`;
+  return `<div class="list">${ts.map(t=>{const c=cat(t.catId);return `<div class="li" onclick="openTask('${t.id}')">
+    <span class="check ${t.status==='done'?'on':''}" onclick="event.stopPropagation();toggle('${t.id}')">${t.status==='done'?'✓':''}</span>
+    <span style="${t.status==='done'?'text-decoration:line-through;color:var(--sub)':''}">${esc(t.title)}</span>
+    ${t.due?`<span class="meta ${isLate(t)?'late':''}" style="margin:0">${fmtDate(t.due)}${t.time?' '+t.time:''}</span>`:''}
+    <span class="cat">${t.type?`<span class="chip type" style="margin-right:6px">${esc(t.type)}</span>`:''}${c?(c.icon?c.icon+' ':'')+esc(c.name):''}</span></div>`}).join('')}</div>`;
+}
+const fmtDate=d=>{const[y,m,dd]=d.split('-');return `${+m}/${+dd}`};
+
+function pCat(){
+  const c=cat(route.id); if(!c)return go('home');
+  const all=tasksOf(c.id);
+  if(typeFilter&&!c.types.includes(typeFilter))typeFilter='';
+  const ts=typeFilter?all.filter(t=>t.type===typeFilter):all;
+  const doneN=ts.filter(t=>t.status==='done').length,shown=c.hideDone?ts.filter(t=>t.status!=='done'):ts;
+  $('#main').innerHTML=`${heroHTML(c)}
+  <div class="page">
+    ${c.icon?`<div class="page-icon" onclick="editCat('${c.id}')">${c.icon}</div>`:'<div style="height:28px"></div>'}
+    <h1 class="title ${/^[\x00-\x7F]+$/.test(c.name)?'en':''}" style="font-size:${/^[\x00-\x7F]+$/.test(c.name)?'40px':''}" contenteditable="true" spellcheck="false" onblur="renameCat('${c.id}',this.textContent)">${esc(c.name)}</h1>
+    <p class="lead">${ts.filter(t=>t.status==='done').length} / ${ts.length} 完了 ・ <a href="#" class="link" onclick="editCat('${c.id}');return false">分類の設定</a></p>
+    <div class="types">${c.types.length?`<button class="${typeFilter?'':'on'}" onclick="typeFilter='';render()">すべて</button>`:''}${c.types.map((ty,i)=>`<button class="${typeFilter===ty?'on':''}" onclick="${typeEdit?`openTypeEdit('${c.id}',${i})`:`typeFilter=cat('${c.id}').types[${i}];render()`}">${typeStyle(c,ty).ico?typeStyle(c,ty).ico+' ':''}${esc(ty)} ${typeEdit?'<span class="x" style="color:var(--accent)">✎</span>':`<span style="opacity:.6">${all.filter(t=>t.type===ty&&t.status!=='done').length||''}</span>`}</button>`).join('')}
+      <button class="tadd" onclick="addType('${c.id}')">＋ 種類を追加</button>${c.types.length?`<button class="tadd" onclick="typeEdit=!typeEdit;render()">${typeEdit?'✓ 完了':'✎ 編集・削除'}</button>`:''}</div>
+    <div class="vtabs">
+      <button class="${c.view!=='board'?'on':''}" onclick="setView('${c.id}','table')">☰ すべてのタスク</button>
+      <button class="${c.view==='board'?'on':''}" onclick="setView('${c.id}','board')">▦ ステータス別</button>
+      <span class="sp"></span>
+      <label class="hidedone"><input type="checkbox" ${c.hideDone?'checked':''} onchange="cat('${c.id}').hideDone=this.checked;save();render()">完了を隠す${c.hideDone&&doneN?`<span style="opacity:.6">（${doneN}件）</span>`:''}</label>
+      <button class="new" onclick="newTaskIn('${c.id}')">新規</button>
+    </div>
+    ${c.view==='board'?boardHTML(c,shown):tableHTML(c,shown)}
+  </div>`;
+}
+/* ---------- カバー画像（位置・拡大・高さを調整できる） ---------- */
+const isPhoto=v=>!!v&&!/^(linear|radial)-gradient/.test(v);
+function coverPos(c){return Object.assign({x:50,y:50,z:100,h:220},c.coverPos||{})}
+function heroHTML(c){const p=coverPos(c),photo=isPhoto(c.cover);
+  return `<div class="hero" id="hero" data-cat="${c.id}" style="height:${p.h}px;${photo?'':`background-image:${bg(c.cover)}`}">
+    ${photo?`<img class="hero-img" src="${esc(c.cover)}" alt="" draggable="false" style="object-position:${p.x}% ${p.y}%;transform:scale(${p.z/100});transform-origin:${p.x}% ${p.y}%">`:''}
+    <div class="hero-btns"><button onclick="editCat('${c.id}')">カバーを変更</button>${photo?`<button onclick="startRepos()">位置を調整</button>`:''}<button onclick="startRepos(true)">高さを調整</button></div>
+  </div>`}
+let repos=null;
+function startRepos(heightOnly){
+  const h=$('#hero'),c=cat(h.dataset.cat),img=h.querySelector('.hero-img');repos={c,p:coverPos(c),orig:{...coverPos(c)}};const p=repos.p;
+  h.classList.add('repos');
+  h.insertAdjacentHTML('beforeend',`${img&&!heightOnly?'<div class="repos-hint">ドラッグして見せたい位置に動かす</div>':''}
+    <div class="repos-bar">
+      ${img&&!heightOnly?`<label>拡大<input type="range" min="100" max="300" value="${p.z}" id="rz_z"></label>`:''}
+      <label>高さ<input type="range" min="120" max="460" value="${p.h}" id="rz_h"></label>
+      <button class="ghost" onclick="endRepos(false)">キャンセル</button><button class="ok" onclick="endRepos(true)">保存</button></div>`);
+  const apply=()=>{h.style.height=p.h+'px';if(img){img.style.objectPosition=`${p.x}% ${p.y}%`;img.style.transformOrigin=`${p.x}% ${p.y}%`;img.style.transform=`scale(${p.z/100})`}};
+  $('#rz_z')&&($('#rz_z').oninput=e=>{p.z=+e.target.value;apply()});
+  $('#rz_h').oninput=e=>{p.h=+e.target.value;apply()};
+  if(img&&!heightOnly){
+    img.onpointerdown=e=>{e.preventDefault();img.setPointerCapture(e.pointerId);const sx=e.clientX,sy=e.clientY,ox=p.x,oy=p.y,W=h.clientWidth,H=h.clientHeight;
+      const k=100/(p.z/100);
+      img.onpointermove=ev=>{p.x=Math.min(100,Math.max(0,ox-(ev.clientX-sx)/W*k*1.4));p.y=Math.min(100,Math.max(0,oy-(ev.clientY-sy)/H*k*1.4));apply()};
+      img.onpointerup=()=>{img.onpointermove=null}};
+  }
+}
+function endRepos(ok){if(!repos)return;if(ok){repos.c.coverPos=repos.p;save()}repos=null;render()}
+function setView(id,v){cat(id).view=v;save();render()}
+function boardHTML(c,ts){return `<div class="board" style="margin-top:12px">${STATUSES.filter(s=>!(c.hideDone&&s.id==='done')).map(s=>{const list=ts.filter(t=>t.status===s.id);return `
+      <div class="col" data-status="${s.id}" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="dropTo(event,'${s.id}')">
+        <div class="col-h"><span class="pill" style="background:${s.color}"></span>${s.label}<span style="color:var(--sub);font-weight:400">${list.length}</span></div>
+        ${list.sort(byOrder).map(taskCard).join('')}
+        <form class="quick" onsubmit="quickAdd(event,'${c.id}','${s.id}')"><input placeholder="＋ タスクを追加"></form>
+      </div>`}).join('')}</div>`}
+
+function typeStyle(c,ty){if(c.typeMeta?.[ty])return c.typeMeta[ty];if(TYPE_STYLE[ty])return TYPE_STYLE[ty];const i=Math.max(0,c.types.indexOf(ty));const [b,f]=TYPE_AUTO[i%TYPE_AUTO.length];return {ico:'',bg:b,fg:f}}
+function statusSel(t){const [b,f,d]=STATUS_PILL[t.status]||['#eee','#555','#999'];
+  const dot=`data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='8' height='8'><circle cx='4' cy='4' r='4' fill='${d}'/></svg>`)}`;
+  return `<select class="spill" style="background-color:${b};color:${f};background-image:url(&quot;${dot}&quot;)" onchange="setField('${t.id}','status',this.value)">${STATUSES.map(s=>`<option value="${s.id}" ${s.id===t.status?'selected':''}>${s.label}</option>`).join('')}</select>`}
+function typeSel(c,t){if(!c.types.length)return '';const st=t.type?typeStyle(c,t.type):null;
+  return `<select class="tpill ${t.type?'':'none'}" style="${st?`background:${st.bg};color:${st.fg}`:''}" onchange="if(this.value==='__new'){addType('${c.id}','${t.id}')}else setField('${t.id}','type',this.value)">
+    <option value="">${t.type?'（なし）':'＋ 選ぶ'}</option>${c.types.map(ty=>{const x=typeStyle(c,ty);return `<option value="${esc(ty)}" ${ty===t.type?'selected':''}>${x.ico?x.ico+' ':''}${esc(ty)}</option>`}).join('')}<option value="__new">＋ 新しい種類を追加…</option></select>`}
+function addType(catId,taskId){const c=cat(catId);const v=(prompt('追加する種類の名前（例：研修）')||'').trim();
+  if(!v){render();return}
+  if(!c.types.includes(v))c.types.push(v);
+  if(taskId)S.tasks.find(t=>t.id===taskId).type=v;
+  save();render()}
+const TYPE_COLORS=[...Object.values(TYPE_STYLE).map(x=>[x.bg,x.fg]),...TYPE_AUTO];
+const TYPE_MARKS=['','🔄','★','🌳','🤝','📋','🔗','💡','📌','🏥','💻','📝','⚠️','🎓','🗓️','💰'];
+let tdraft=null;
+function openTypeEdit(catId,i){const c=cat(catId),ty=c.types[i],st=typeStyle(c,ty);tdraft={catId,i,old:ty,name:ty,ico:st.ico||'',bg:st.bg,fg:st.fg};drawTypeDlg();$('#typeDlg').showModal()}
+function drawTypeDlg(){const t=tdraft;
+  $('#typeDlg').innerHTML=`<div class="dlg-body">
+    <div style="margin-bottom:12px"><span class="chip" style="background:${t.bg};color:${t.fg};font-size:15px;padding:4px 12px;border-radius:6px">${t.ico?t.ico+' ':''}${esc(t.name||'名前')}</span></div>
+    <div class="prop"><label>名前</label><input id="ty_name" value="${esc(t.name)}" oninput="tdraft.name=this.value;this.closest('dialog').querySelector('.chip').lastChild.textContent=(tdraft.ico?tdraft.ico+' ':'')+this.value"></div>
+    <div class="prop" style="grid-template-columns:1fr"><label>マーク</label></div>
+    <div class="emojis">${TYPE_MARKS.map(m=>`<button style="${m?'':'font-size:12px;padding:4px 10px;border:1px dashed var(--line)'};${m===t.ico?'background:var(--accent-soft)':''}" onclick="tdraft.name=$('#ty_name').value;tdraft.ico='${m}';drawTypeDlg()">${m||'なし'}</button>`).join('')}</div>
+    <div class="prop" style="grid-template-columns:1fr"><label>色</label></div>
+    <div class="emojis">${TYPE_COLORS.map(([b,f])=>`<button style="width:30px;height:30px;border-radius:6px;background:${b};border:2px solid ${b===t.bg?f:'transparent'}" onclick="tdraft.name=$('#ty_name').value;tdraft.bg='${b}';tdraft.fg='${f}';drawTypeDlg()"></button>`).join('')}</div>
+    <div class="row"><button class="danger" onclick="$('#typeDlg').close();delType('${t.catId}',${t.i})">この種類を削除</button><span class="grow"></span>
+      <button class="btn" onclick="$('#typeDlg').close()">閉じる</button><button class="btn primary" onclick="saveType()">保存</button></div></div>`}
+function saveType(){const t=tdraft,c=cat(t.catId);const name=$('#ty_name').value.trim();if(!name)return $('#ty_name').focus();
+  if(name!==t.old&&c.types.includes(name))return alert('同じ名前の種類がすでにあります');
+  c.typeMeta??={};delete c.typeMeta[t.old];c.typeMeta[name]={ico:t.ico,bg:t.bg,fg:t.fg};
+  c.types[t.i]=name;S.tasks.forEach(x=>{if(x.catId===t.catId&&x.type===t.old)x.type=name});
+  if(typeFilter===t.old)typeFilter=name;save();$('#typeDlg').close();render()}
+function delType(catId,i){const c=cat(catId),ty=c.types[i];const n=S.tasks.filter(t=>t.catId===catId&&t.type===ty).length;
+  if(!confirm(`種類「${ty}」を削除しますか？${n?`\nこの種類が付いた${n}件のタスクは「種類なし」になります（タスク自体は消えません）。`:''}`))return;
+  c.types.splice(i,1);S.tasks.forEach(t=>{if(t.catId===catId&&t.type===ty)t.type=''});
+  if(typeFilter===ty)typeFilter='';if(!c.types.length)typeEdit=false;save();render()}
+const byOrder=(a,b)=>(a.order??1e12)-(b.order??1e12);
+function tableHTML(c,ts){
+  const sb=c.sort||'status',order={doing:0,todo:1,review:2,hold:3,done:4};
+  const sorted=[...ts].sort(byOrder).sort(sb==='manual'?()=>0:sb==='due'?(a,b)=>(a.due||'9').localeCompare(b.due||'9'):sb==='type'?(a,b)=>(c.types.indexOf(a.type)>>>0)-(c.types.indexOf(b.type)>>>0):(a,b)=>order[a.status]-order[b.status]);
+  const th=(k,ico,l)=>`<th ${k?`onclick="setSort('${c.id}','${k}')" title="クリックで並べ替え"`:''}><span class="hi">${ico}</span>${l}${sb===k?' ↑':''}</th>`;
+  return `<div class="sortinfo">並び順：${{status:'ステータス順',due:'期日順',type:'種類順',manual:'自分で並べた順'}[sb]}${sb!=='manual'?`<button onclick="setSort('${c.id}','manual')">自分で並べた順にする</button>`:''}<span>行の左の ⠿ をドラッグすると順番を変えられます</span></div>
+  <div class="ntable-wrap"><table class="ntable" data-cat="${c.id}">
+    <colgroup><col style="width:34%"><col style="width:13%"><col style="width:25%"><col style="width:13%">${c.types.length?'<col style="width:15%">':''}</colgroup>
+    <tr>${th('','Aa','タスク名')}${th('status','◌','ステータス')}${th('','☰','説明')}${th('due','📅','期日')}${c.types.length?th('type','◆','タスクの種類'):''}</tr>
+    ${sorted.map(t=>`<tr class="${t.status==='done'?'done':''}" data-id="${t.id}">
+      <td><div class="tname"><span class="rgrip" draggable="true" title="ドラッグで順番を変更">⠿</span><input class="cell tt" value="${esc(t.title)}" onchange="if(this.value.trim())setField('${t.id}','title',this.value.trim());else this.value=S.tasks.find(x=>x.id==='${t.id}').title" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"><button class="open" onclick="openTask('${t.id}')">開く</button></div></td>
+      <td>${statusSel(t)}</td>
+      <td><input class="cell" value="${esc(t.desc||'')}" onchange="setField('${t.id}','desc',this.value)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"></td>
+      <td><input class="cell ${isLate(t)?'late':''} ${t.due?'':'nodate'}" type="date" value="${t.due||''}" onchange="setField('${t.id}','due',this.value)"></td>
+      ${c.types.length?`<td>${typeSel(c,t)}</td>`:''}</tr>`).join('')}
+    <tr class="addrow"><td colspan="5"><form onsubmit="quickAdd(event,'${c.id}','todo')"><input placeholder="＋ 新規"></form></td></tr>
+  </table></div>`;
+}
+function setSort(catId,k){const c=cat(catId);
+  if(k==='manual'&&c.sort!=='manual'){/* 今見えている順番をそのまま「自分の順番」として保存 */
+    [...document.querySelectorAll('.ntable tr[data-id]')].forEach((r,i)=>{S.tasks.find(t=>t.id===r.dataset.id).order=i*10})}
+  c.sort=k;save();render()}
+/* 行のドラッグで並べ替え */
+let dragRow=null;
+document.addEventListener('dragstart',e=>{const g=e.target.closest?.('.rgrip');if(!g)return;dragRow=g.closest('tr');dragRow.classList.add('dragging');e.dataTransfer.setData('text/plain',dragRow.dataset.id);e.dataTransfer.setDragImage(dragRow,20,20)});
+document.addEventListener('dragover',e=>{if(!dragRow)return;const tr=e.target.closest?.('.ntable tr[data-id]');document.querySelectorAll('.ntable tr.ins-top,.ntable tr.ins-bot').forEach(x=>x.classList.remove('ins-top','ins-bot'));
+  if(!tr||tr===dragRow)return;e.preventDefault();const r=tr.getBoundingClientRect();tr.classList.add(e.clientY<r.top+r.height/2?'ins-top':'ins-bot')});
+document.addEventListener('drop',e=>{if(!dragRow)return;const tr=document.querySelector('.ntable tr.ins-top,.ntable tr.ins-bot');if(!tr)return;e.preventDefault();
+  const rows=[...document.querySelectorAll('.ntable tr[data-id]')].filter(x=>x!==dragRow);let k=rows.indexOf(tr)+(tr.classList.contains('ins-bot')?1:0);rows.splice(k,0,dragRow);
+  rows.forEach((r,i)=>{S.tasks.find(t=>t.id===r.dataset.id).order=i*10});const c=cat(document.querySelector('.ntable').dataset.cat);c.sort='manual';dragRow=null;save();render()});
+document.addEventListener('dragend',()=>{dragRow?.classList.remove('dragging');dragRow=null;document.querySelectorAll('.ins-top,.ins-bot').forEach(x=>x.classList.remove('ins-top','ins-bot'))});
+function setField(id,k,v){const t=S.tasks.find(x=>x.id===id);t[k]=v;save();if(k!=='desc')render();else renderSide()}
+function newTaskIn(catId){openTask(null,{id:uid(),catId,title:'',status:'todo',type:typeFilter,desc:'',due:'',time:'',priority:'',note:'',image:''})}
+function taskCard(t){return `<div class="task ${t.status==='done'?'done':''}" data-id="${t.id}" draggable="true" ondragstart="event.dataTransfer.setData('text/plain','${t.id}')" onclick="openTask('${t.id}')">
+  ${t.image?`<img src="${esc(t.image)}" alt="">`:''}
+  <div class="in"><div class="t">${esc(t.title)}</div>
+  <div class="meta">${t.due?`<span class="${isLate(t)?'late':''}">📅 ${fmtDate(t.due)}${t.time?' '+t.time:''}</span>`:''}${t.type&&cat(t.catId)?(st=>`<span class="chip" style="background:${st.bg};color:${st.fg}">${st.ico?st.ico+' ':''}${esc(t.type)}</span>`)(typeStyle(cat(t.catId),t.type)):''}${t.priority?`<span class="chip">${t.priority}</span>`:''}${t.note?'<span>📝</span>':''}</div></div></div>`}
+
+function pCal(){
+  const y=calMonth.getFullYear(),m=calMonth.getMonth();
+  let body='';
+  if(calTab==='mine'){
+    const first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());
+    let cells='';
+    for(let i=0;i<42;i++){
+      const d=new Date(start);d.setDate(start.getDate()+i);
+      const ds=new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+      const evs=S.tasks.filter(t=>t.due===ds);const hol=S.settings.holidays!==false&&HOLIDAYS[ds];
+      cells+=`<div class="d ${d.getMonth()!==m?'other':''} ${ds===today()?'today':''} ${hol||d.getDay()===0?'hol':''} ${d.getDay()===6?'sat':''}" onclick="newTaskOn('${ds}')"><span class="n">${d.getDate()}</span>${hol?`<span class="holname">${esc(hol)}</span>`:''}
+      ${evs.map(t=>{const c=cat(t.catId);return `<button class="ev" style="background:${t.status==='done'?'var(--todo)':'var(--accent)'}" onclick="event.stopPropagation();openTask('${t.id}')">${c&&c.icon?c.icon+' ':''}${esc(t.title)}</button>`}).join('')}</div>`;
+      if(i===34&&new Date(start.getTime()+35*864e5).getMonth()!==m)break;
+    }
+    loadHolidays();
+    body=`<div style="display:flex;justify-content:flex-end;margin:-6px 0 8px"><label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" ${S.settings.holidays!==false?'checked':''} onchange="S.settings.holidays=this.checked;save();render()">🎌 祝日を表示</label></div>
+    <div class="cal">${'日月火水木金土'.split('').map(w=>`<div class="dw">${w}</div>`).join('')}${cells}</div>
+      <p class="lead" style="margin-top:12px">日付をクリックするとその日のタスクを追加できます。各タスクの画面から「Googleカレンダーに追加」もできます。</p>`;
+  }else{
+    const g=S.settings.gcals;
+    body=`<div class="gcals">${g.map((id,i)=>`<span class="gc"><button class="gdot" title="色を変更" style="background:${gcolor(id)}" onclick="gcalColorPop(${i},this)"></button>${esc(id)}<button title="外す" onclick="S.settings.gcals.splice(${i},1);save();render()">×</button></span>`).join('')}
+      <form id="gcalForm"><input name="u" placeholder="${g.length?'カレンダーID・他の人のGmailアドレスを追加':'自分のGmailアドレス（例：yourname@gmail.com）'}"><button class="btn primary" style="white-space:nowrap">追加</button></form>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" ${S.settings.holidays!==false?'checked':''} onchange="S.settings.holidays=this.checked;save();render()">🎌 日本の祝日を表示</label>${S.settings.holidays!==false?`<button class="gdot" title="祝日の色" style="background:${gcolor(HOLIDAY_CAL)}" onclick="gcalColorPop(-1,this)"></button>`:''}</div>
+      ${g.length?`<iframe class="gframe" src="${esc(embedFor(S.settings.holidays!==false?[...g,HOLIDAY_CAL]:g))}"></iframe>
+      <div class="row" style="margin-top:12px"><a class="btn" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">Googleカレンダーを別タブで開く ↗</a></div>
+      <div class="hint" style="margin-top:14px;font-size:13px"><b>自分の2つ目のカレンダー（例：「まい」）を出すには</b>
+        <ol><li>パソコンでGoogleカレンダーを開き、左の「マイカレンダー」で出したいカレンダー（まい）にマウスを乗せて「︙」→「設定と共有」</li>
+        <li>下の方の「カレンダーの統合」にある<b>カレンダーID</b>（…@group.calendar.google.com のような文字）をコピー</li>
+        <li>上の欄に貼り付けて「追加」。非公開のままで大丈夫です（ログインしている本人には表示されます）</li></ol>
+        <b>他の人の予定が出ないとき</b>
+        <ol style="margin-bottom:0"><li>相手のカレンダーが自分に共有されている必要があります。Googleカレンダーの左側「他のカレンダー」に相手が出ていれば共有済みです</li>
+        <li>出ていなければ、相手に「設定と共有」→「特定のユーザーまたはグループと共有」で自分を追加してもらうか、会社のGoogleアカウントなら「他のカレンダー」の＋から相手を追加します</li>
+        <li>共有されたら、相手のメールアドレスを上の欄に追加すると、ここに色分けで重なって表示されます</li></ol>
+        <p class="lead" style="margin:8px 0 0;font-size:12px">「権限がありません」と出る場合は、このブラウザでGoogleにログインしてから再読み込みしてください。</p></div>`
+      :`<div class="hint">まず自分のGmailアドレスを入れて「追加」を押してください。そのあと、他の人のアドレスも追加できます。</div>`}`;
+  }
+  $('#main').innerHTML=`<div class="page">
+    <h1 class="title">🗓️ <span class="en" style="font-size:40px">Calendar</span></h1><p class="lead">タスクの期限とGoogleカレンダーの予定</p>
+    <div class="cal-top">
+      ${calTab==='mine'?`<button class="btn" onclick="moveMonth(-1)">‹</button><span class="m">${y}年 ${m+1}月</span><button class="btn" onclick="moveMonth(1)">›</button><button class="btn" onclick="calMonth=new Date();render()">今日</button>`:''}
+      <div class="tabs"><button class="${calTab==='mine'?'on':''}" onclick="calTab='mine';render()">タスク</button><button class="${calTab==='g'?'on':''}" onclick="calTab='g';render()">Googleカレンダー</button></div>
+    </div>${body}</div>`;
+  const gf=$('#gcalForm');if(gf)gf.onsubmit=e=>{e.preventDefault();const ids=calIds(gf.u.value);if(!ids.length)return gf.u.focus();ids.forEach(id=>{if(!S.settings.gcals.includes(id))S.settings.gcals.push(id)});save();render()};
+}
+/* 入力（メールアドレス・カレンダーID・埋め込みコード・URL）からカレンダーIDを取り出す */
+function calIds(v){
+  v=v.trim();const out=[];
+  const srcs=[...v.matchAll(/[?&](?:amp;)?(?:src|cid)=([^&"'\s]+)/g)].map(m=>decodeURIComponent(m[1]));
+  const list=srcs.length?srcs:v.split(/[\s,、]+/).filter(Boolean);
+  list.forEach(id=>{if(!id.includes('@')&&/^[A-Za-z0-9+/=_-]+$/.test(id)){try{const d=atob(id.replace(/-/g,'+').replace(/_/g,'/'));if(d.includes('@'))id=d}catch(e){}}out.push(id)});
+  return out;
+}
+const HOLIDAY_CAL='ja.japanese#holiday@group.v.calendar.google.com';
+/* Googleカレンダーと同じ色（名前はGoogleの色名） */
+const GPALETTE=[['トマト','#D50000'],['フラミンゴ','#E67C73'],['ミカン','#F4511E'],['バナナ','#F6BF26'],['セージ','#33B679'],['バジル','#0B8043'],['ピーコック','#039BE5'],['ブルーベリー','#3F51B5'],['ラベンダー','#7986CB'],['ブドウ','#8E24AA'],['グラファイト','#616161'],
+  ['チェリーブロッサム','#D81B60'],['パンプキン','#EF6C00'],['アボカド','#C0CA33'],['ユーカリ','#009688'],['コバルト','#4285F4'],['アメジスト','#9E69AF'],['ラディッキオ','#AD1457'],['マンゴー','#F09300'],['ピスタチオ','#7CB342'],['シトロン','#E4C441'],['ココア','#795548'],['バーチ','#A79B8E'],['ウィステリア','#B39DDB']];
+const GDEFAULT=['#F09300','#33B679','#039BE5','#8E24AA','#E67C73','#3F51B5','#7CB342','#795548'];
+function gcolor(id){S.settings.gcalColors??={};if(id===HOLIDAY_CAL)return S.settings.gcalColors[id]||'#D50000';return S.settings.gcalColors[id]||GDEFAULT[Math.max(0,S.settings.gcals.indexOf(id))%GDEFAULT.length]}
+function gcalColorPop(i,btn){$('#gpop')?.remove();const id=i<0?HOLIDAY_CAL:S.settings.gcals[i],cur=gcolor(id),r=btn.getBoundingClientRect();
+  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="gpop" style="top:${r.bottom+6}px;left:${Math.min(r.left,innerWidth-270)}px;right:auto"><b style="font-size:13px">カレンダーの色</b>
+    <div class="sw">${GPALETTE.map(([n,c])=>`<button title="${n}" class="${c===cur?'on':''}" style="background:${c};border:none" onclick="S.settings.gcalColors['${id}']='${c}';save();$('#gpop').remove();render()"></button>`).join('')}</div>
+    <div style="font-size:11.5px;color:#888">Googleカレンダーで付けている色と同じ名前の色を選んでください</div></div>`)}
+document.addEventListener('click',e=>{const p=$('#gpop');if(p&&!p.contains(e.target)&&!e.target.closest('.gdot'))p.remove()});
+function embedFor(ids){const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Tokyo';const u=new URL('https://calendar.google.com/calendar/embed');
+  ids.forEach(id=>{u.searchParams.append('src',id);u.searchParams.append('color',gcolor(id))});
+  u.searchParams.set('ctz',tz);u.searchParams.set('mode','MONTH');u.searchParams.set('showTitle','0');u.searchParams.set('showPrint','0');u.searchParams.set('hl','ja');return u.toString()}
+/* 日本の祝日（holidays-jp・APIキー不要、1日1回取得） */
+let HOLIDAYS={};try{HOLIDAYS=JSON.parse(localStorage.getItem('myworkspace.holidays'))||{}}catch(e){}
+let holLoading=false;
+async function loadHolidays(){
+  if(holLoading)return;let at=0;try{at=+localStorage.getItem('myworkspace.holidaysAt')||0}catch(e){}
+  if(Object.keys(HOLIDAYS).length&&Date.now()-at<864e5)return;
+  holLoading=true;
+  try{HOLIDAYS=await (await fetch('https://holidays-jp.github.io/api/v1/date.json')).json();
+    try{localStorage.setItem('myworkspace.holidays',JSON.stringify(HOLIDAYS));localStorage.setItem('myworkspace.holidaysAt',Date.now())}catch(e){}
+    if(route.v==='calendar')render()}catch(e){}
+  holLoading=false}
+function moveMonth(n){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+n,1);render()}
+
+/* ---------- actions ---------- */
+function toggle(id){const t=S.tasks.find(x=>x.id===id);t.status=t.status==='done'?'todo':'done';save();render()}
+function quickAdd(e,catId,status){e.preventDefault();const v=e.target.querySelector('input').value.trim();if(!v)return;
+  S.tasks.push({id:uid(),catId,title:v,status,type:typeFilter,due:'',time:'',priority:'',note:'',image:''});save();render();
+  setTimeout(()=>(document.querySelector(`.col[data-status="${status}"] .quick input`)||document.querySelector('.addrow input'))?.focus())}
+function dropTo(e,status){e.preventDefault();const t=S.tasks.find(x=>x.id===e.dataTransfer.getData('text/plain'));if(!t)return;t.status=status;
+  const col=e.target.closest('.col'),over=e.target.closest('.task');
+  if(col){const ids=[...col.querySelectorAll('.task')].map(x=>x.dataset.id).filter(id=>id!==t.id);let k=over&&over.dataset.id!==t.id?ids.indexOf(over.dataset.id):ids.length;
+    if(over){const r=over.getBoundingClientRect();if(e.clientY>r.top+r.height/2)k++}ids.splice(k,0,t.id);ids.forEach((id,i)=>S.tasks.find(x=>x.id===id).order=i*10)}
+  save();render()}
+function renameCat(id,name){const c=cat(id);name=name.trim();if(name&&c.name!==name){c.name=name;save();renderSide()}}
+function newTaskOn(ds){const c=S.categories[0];if(!c)return newCat();const t={id:uid(),catId:c.id,title:'',status:'todo',type:'',due:ds,time:'',priority:'',note:'',image:''};openTask(null,t)}
+
+/* ---------- image helpers ---------- */
+function pickImage(cb){const f=$('#fileIn');f.onchange=()=>{const file=f.files[0];f.value='';if(!file)return;
+  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const W=1400,s=Math.min(1,W/img.width);const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',.8))};img.src=r.result};r.readAsDataURL(file)};f.click()}
+
+/* ---------- task dialog ---------- */
+let draft=null;
+function openTask(id,fresh){
+  draft=fresh?{...fresh,_new:true}:{...S.tasks.find(t=>t.id===id)}; if(!draft.id)return;
+  drawTaskDlg(); $('#taskDlg').showModal(); if(draft._new)setTimeout(()=>$('#taskDlg .tt').focus());
+}
+function drawTaskDlg(){
+  const t=draft;
+  $('#taskDlg').innerHTML=`
+   <div class="dlg-cover" style="${t.image?`background-image:url('${esc(t.image)}')`:'height:56px'}">
+     <div class="pick"><button onclick="pickImage(v=>{draft.image=v;keepFields();drawTaskDlg()})">🖼 画像を${t.image?'変更':'追加'}</button>
+     <button onclick="const u=prompt('画像のURL');if(u){draft.image=u;keepFields();drawTaskDlg()}">URL</button>
+     ${t.image?`<button onclick="draft.image='';keepFields();drawTaskDlg()">削除</button>`:''}</div></div>
+   <div class="dlg-body">
+     <input class="tt" id="f_title" value="${esc(t.title)}" placeholder="タスク名">
+     <div class="prop"><label>分類</label><select id="f_cat" onchange="keepFields();drawTaskDlg()">${S.categories.map(c=>`<option value="${c.id}" ${c.id===t.catId?'selected':''}>${c.icon?c.icon+' ':''}${esc(c.name)}</option>`).join('')}</select></div>
+     ${cat(t.catId)?.types?.length?`<div class="prop"><label>種類</label><select id="f_type"><option value="">なし</option>${cat(t.catId).types.map(ty=>`<option ${ty===t.type?'selected':''}>${esc(ty)}</option>`).join('')}</select></div>`:''}
+     <div class="prop"><label>ステータス</label><select id="f_status">${STATUSES.map(s=>`<option value="${s.id}" ${s.id===t.status?'selected':''}>${s.label}</option>`).join('')}</select></div>
+     <div class="prop"><label>期限</label><div style="display:flex;gap:6px"><input type="date" id="f_due" value="${t.due||''}"><input type="time" id="f_time" value="${t.time||''}"></div></div>
+     <div class="prop"><label>優先度</label><select id="f_pri">${['','高','中','低'].map(p=>`<option ${p===t.priority?'selected':''} value="${p}">${p||'なし'}</option>`).join('')}</select></div>
+     <div class="prop"><label>説明</label><input id="f_desc" value="${esc(t.desc||'')}" placeholder="一言で"></div>
+     <textarea id="f_note" placeholder="メモ">${esc(t.note||'')}</textarea>
+     <div class="row">
+       ${t._new?'':`<button class="danger" onclick="delTask()">削除</button>`}
+       <span class="grow"></span>
+       <a class="link" href="#" onclick="keepFields();gcalAdd(draft);return false">＋ Googleカレンダーに追加</a>
+       <button class="btn" onclick="$('#taskDlg').close()">閉じる</button>
+       <button class="btn primary" onclick="saveTask()">保存</button>
+     </div></div>`;
+}
+function keepFields(){const g=i=>document.getElementById(i)?.value;if(!g('f_title')&&g('f_title')!=='')return;
+  Object.assign(draft,{title:g('f_title'),catId:g('f_cat'),status:g('f_status'),due:g('f_due'),time:g('f_time'),priority:g('f_pri'),note:g('f_note'),desc:g('f_desc')??'',type:g('f_type')??''})}
+function saveTask(){keepFields();if(!draft.title.trim()){$('#f_title').focus();return}
+  const isNew=draft._new;delete draft._new;
+  if(isNew)S.tasks.push(draft);else Object.assign(S.tasks.find(t=>t.id===draft.id),draft);
+  save();$('#taskDlg').close();render()}
+function delTask(){if(!confirm('このタスクを削除しますか？'))return;S.tasks=S.tasks.filter(t=>t.id!==draft.id);save();$('#taskDlg').close();render()}
+
+/* Googleカレンダー：予定作成画面を開く（ログイン済みのGoogleアカウントに登録） */
+function gcalAdd(t){
+  if(!t.due){alert('先に期限の日付を入れてください');return}
+  const d=t.due.replace(/-/g,'');let dates;
+  if(t.time){const[h,mi]=t.time.split(':').map(Number);const e=new Date(2000,0,1,h+1,mi);
+    dates=`${d}T${t.time.replace(':','')}00/${d}T${String(e.getHours()).padStart(2,'0')}${String(e.getMinutes()).padStart(2,'0')}00`;}
+  else{const n=new Date(t.due);n.setDate(n.getDate()+1);dates=`${d}/${n.toISOString().slice(0,10).replace(/-/g,'')}`}
+  const c=cat(t.catId);
+  const u=new URL('https://calendar.google.com/calendar/render');
+  u.searchParams.set('action','TEMPLATE');u.searchParams.set('text',t.title);u.searchParams.set('dates',dates);
+  u.searchParams.set('details',(c?`[${c.name}] `:'')+(t.note||''));
+  window.open(u,'_blank');
+}
+
+/* ---------- category dialog ---------- */
+let cdraft=null;
+function newCat(){cdraft={id:uid(),name:'',types:[],icon:'📁',cover:COVERS[Math.floor(Math.random()*COVERS.length)],_new:true};drawCatDlg();$('#catDlg').showModal()}
+function editCat(id){cdraft={...cat(id)};drawCatDlg();$('#catDlg').showModal()}
+function drawCatDlg(){const c=cdraft;
+  $('#catDlg').innerHTML=`<div class="dlg-cover" style="background-image:${bg(c.cover)}">
+    <div class="pick"><button onclick="keepCat();pickImage(v=>{cdraft.cover=v;liveCat()})">🖼 写真をアップロード</button>
+    <button onclick="keepCat();const u=prompt('画像のURL');if(u){cdraft.cover=u.trim();liveCat()}">URL</button></div></div>
+   <div class="dlg-body">
+     <div style="display:flex;gap:10px;align-items:center">${c.icon?`<span style="font-size:34px">${c.icon}</span>`:''}
+     <input class="tt" id="c_name" value="${esc(c.name)}" placeholder="分類の名前（例：仕事）" style="padding:0"></div>
+     <div class="prop" style="grid-template-columns:1fr"><label>アイコン</label></div>
+     <div class="emojis"><button style="font-size:12px;padding:4px 10px;border:1px dashed var(--line);${c.icon?'':'background:var(--accent-soft)'}" onclick="keepCat();cdraft.icon='';liveCat()">なし</button>${EMOJIS.map(e=>`<button onclick="keepCat();cdraft.icon='${e}';liveCat()">${e}</button>`).join('')}</div>
+     <div class="prop" style="grid-template-columns:1fr"><label>タスクの種類（カンマ区切り。空なら種類なし）</label></div>
+     <input id="c_types" value="${esc((c.types||[]).join(', '))}" placeholder="例：新チーム, 大黒柱" style="width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)">
+     <div class="prop" style="grid-template-columns:1fr"><label>カバー</label></div>
+     <div class="covers">${COVERS.map((v,i)=>`<button style="background-image:${v}" onclick="keepCat();cdraft.cover=COVERS[${i}];liveCat()"></button>`).join('')}</div>
+     <div class="row">${c._new?'':`<button class="danger" onclick="delCat()">分類を削除</button>`}<span class="grow"></span>
+       <button class="btn" onclick="$('#catDlg').close()">閉じる</button><button class="btn primary" onclick="saveCat()">保存</button></div>
+   </div>`;
+  setTimeout(()=>c._new&&$('#c_name')?.focus())}
+function keepCat(){const n=$('#c_name');if(n)cdraft.name=n.value;const ty=$('#c_types');if(ty)cdraft.types=ty.value.split(/[,、]/).map(x=>x.trim()).filter(Boolean)}
+/* 既存の分類はカバー・アイコンをその場で反映 */
+function liveCat(){if(!cdraft._new){const c=cat(cdraft.id);c.cover=cdraft.cover;c.icon=cdraft.icon;save();render()}drawCatDlg()}
+function saveCat(){keepCat();if(!cdraft.name.trim()){$('#c_name').focus();return}
+  const isNew=cdraft._new;delete cdraft._new;
+  if(isNew)S.categories.push(cdraft);else Object.assign(cat(cdraft.id),cdraft);
+  save();$('#catDlg').close();isNew?go('cat',cdraft.id):render()}
+function delCat(){const n=tasksOf(cdraft.id).length;if(!confirm(`「${cdraft.name}」${n?`と中のタスク${n}件`:''}を削除しますか？`))return;
+  S.categories=S.categories.filter(c=>c.id!==cdraft.id);S.tasks=S.tasks.filter(t=>t.catId!==cdraft.id);save();$('#catDlg').close();go('home')}
+
+/* ---------- backup ---------- */
+async function exportData(){const out={...S,_media:{}};
+  for(const id of new Set((S.widgets||[]).map(w=>w.mediaId).filter(Boolean))){const b=await mediaBlob(id).catch(()=>null);if(b)out._media[id]=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result);r.readAsDataURL(b)})}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:'application/json'}));a.download=`myworkspace-${today()}.json`;a.click()}
+function fixS(d){d.settings??={};d.settings.gcals??=[];d.settings.weather??={name:'FUKUYAMA',lat:34.4858,lon:133.3626};d.categories.forEach(c=>c.types??=[]);d.memos??=[];return d}
+function importData(){const f=document.createElement('input');f.type='file';f.accept='.json';f.onchange=async()=>{try{const d=JSON.parse(await f.files[0].text());if(!d.categories||!d.tasks)throw Error('形式が違います');if(confirm('今のデータをバックアップの内容で置き換えます。よろしいですか？')){const m=d._media||{};delete d._media;for(const id in m){try{await mediaPut(id,await (await fetch(m[id])).blob())}catch(e){}}S=fixS(d);SY.restored=true;saveSY();save();go('home');toast('バックアップから復元しました')}}catch(e){alert('読み込めませんでした：'+e.message)}};f.click()}
+
+/* ---------- Googleドライブで同期（PC・iPhone共通） ---------- */
+const GOOGLE_CLIENT_ID='127251143592-3vg9ste8i6u14gi431stg4cch06gq4on.apps.googleusercontent.com';
+const DAPI='https://www.googleapis.com/drive/v3',UAPI='https://www.googleapis.com/upload/drive/v3',DOC='myworkspace.json';
+const SCOPE='https://www.googleapis.com/auth/drive.appdata email';
+let SY={};try{SY=JSON.parse(localStorage.getItem('myworkspace.sync'))||{}}catch(e){}
+const saveSY=()=>{try{localStorage.setItem('myworkspace.sync',JSON.stringify(SY))}catch(e){}};
+let syncState='',syncBusy=false,pushTimer=null,syncErr='';
+const syncEnabled=()=>GOOGLE_CLIENT_ID&&!GOOGLE_CLIENT_ID.includes('%%')&&location.protocol==='https:';
+const tokOK=()=>SY.on&&SY.tok&&Date.now()<SY.exp;
+function toast(msg,ms=4000){$('.toast')?.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+/* Googleのログイン画面へ移動（interactive=false は画面を出さずに確認だけ） */
+function gAuth(interactive){const st=uid();try{localStorage.setItem('myworkspace.oauth',JSON.stringify({st,silent:!interactive}))}catch(e){}
+  const p=new URLSearchParams({client_id:GOOGLE_CLIENT_ID,redirect_uri:location.origin+location.pathname,response_type:'token',scope:SCOPE,state:st,include_granted_scopes:'true',prompt:interactive?'select_account':'none'});
+  if(SY.email)p.set('login_hint',SY.email);
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p}
+/* Googleから戻ってきたとき */
+function gReturn(){const h=new URLSearchParams(location.hash.slice(1));if(!h.has('state'))return;
+  let o={};try{o=JSON.parse(localStorage.getItem('myworkspace.oauth'))||{}}catch(e){}
+  history.replaceState(null,'',location.pathname+location.search);
+  if(h.get('state')!==o.st)return;
+  if(h.get('access_token')){SY.on=true;SY.tok=h.get('access_token');SY.exp=Date.now()+(+h.get('expires_in')-120)*1000;saveSY()}
+  else if(h.get('error')){syncState='need';if(!o.silent)syncErr='Googleにログインできませんでした（'+h.get('error')+'）'}}
+async function gfetch(url,opt={}){if(!tokOK())throw Object.assign(Error('auth'),{auth:1});
+  const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+SY.tok}});
+  if(r.status===401){SY.tok='';saveSY();throw Object.assign(Error('auth'),{auth:1})}
+  if(!r.ok)throw Object.assign(Error('Google '+r.status+' '+(await r.text()).slice(0,200)),{status:r.status});return r}
+async function gFind(name){const q=encodeURIComponent(`name='${name}'`);return (await (await gfetch(`${DAPI}/files?spaces=appDataFolder&q=${q}&fields=files(id,modifiedTime)&pageSize=1`)).json()).files[0]}
+async function gUpload(name,blob,id){
+  if(id)return (await gfetch(`${UAPI}/files/${id}?uploadType=media&fields=id,modifiedTime`,{method:'PATCH',body:blob})).json();
+  const bd='mw'+Date.now().toString(36)+Math.random().toString(36).slice(2);
+  const body=new Blob([`--${bd}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:['appDataFolder']})}\r\n--${bd}\r\nContent-Type: ${blob.type||'application/octet-stream'}\r\n\r\n`,blob,`\r\n--${bd}--`]);
+  return (await gfetch(`${UAPI}/files?uploadType=multipart&fields=id,modifiedTime`,{method:'POST',body,headers:{'Content-Type':'multipart/related; boundary='+bd}})).json()}
+const markUp=id=>{SY.up??=[];if(!SY.up.includes(id)){SY.up.push(id);saveSY()}};
+function markDirty(){SY.dirty=true;saveSY();if(!syncEnabled()||!SY.on)return;clearTimeout(pushTimer);
+  if(tokOK())pushTimer=setTimeout(syncNow,2500);else setSync('need')}
+async function syncNow(){if(syncBusy||!tokOK())return;syncBusy=true;setSync('busy');clearTimeout(pushTimer);
+  try{
+    if(!SY.email){try{SY.email=(await (await gfetch('https://www.googleapis.com/oauth2/v3/userinfo')).json()).email||''}catch(e){}}
+    const f=await gFind(DOC);
+    if(f&&f.modifiedTime!==SY.mod){
+      const doc=await (await gfetch(`${DAPI}/files/${f.id}?alt=media`)).json();
+      let take=true;
+      if(SY.mod?SY.dirty:SY.restored)take=confirm(SY.mod?'別の端末でも変更されています。\n\nOK：別の端末の内容を使う\nキャンセル：この端末の内容で上書きする'
+                                   :'Googleドライブに保存済みのデータがあります。\n\nOK：保存済みのデータを使う\nキャンセル：この端末のデータで上書きする');
+      if(take&&doc.data?.categories){S=fixS(doc.data);save(true);SY.dirty=false;render()}
+      SY.mod=f.modifiedTime;SY.restored=false;
+    }
+    if(SY.dirty||!f){const r=await gUpload(DOC,new Blob([JSON.stringify({savedAt:new Date().toISOString(),data:S})],{type:'application/json'}),f?.id);SY.mod=r.modifiedTime;SY.dirty=false;SY.restored=false}
+    for(const id of new Set((S.widgets||[]).map(w=>w.mediaId).filter(Boolean))){if((SY.up||[]).includes(id))continue;
+      const b=await mediaBlob(id);if(b&&!(await gFind('m-'+id)))await gUpload('m-'+id,b);if(b)markUp(id)}
+    SY.at=Date.now();syncErr='';setSync('ok');
+  }catch(e){if(e.auth)setSync('need');else{syncErr=e.message;setSync('err')}console.warn(e)}
+  finally{syncBusy=false;saveSY()}}
+function syncLabel(){const t=SY.at?new Date(SY.at).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}):'';
+  if(!SY.on)return '<span class="ico">☁️</span>Googleで同期<span class="sub">PC・iPhoneで同じデータに</span>';
+  if(syncState==='busy')return '<span class="ico">☁️</span>同期しています…';
+  if(syncState==='err')return '<span class="ico">⚠️</span>同期できませんでした<span class="sub">タップでもう一度</span>';
+  if(!tokOK())return '<span class="ico">☁️</span>タップして同期<span class="sub">Googleの確認が切れました</span>';
+  return `<span class="ico">☁️</span>同期済み ${t}<span class="sub">${esc(SY.email||'')}</span>`}
+function setSync(st){syncState=st;const b=$('#syncBtn');if(b)b.innerHTML=syncLabel();
+  let p=$('#syncpill');if(!p){p=document.createElement('button');p.id='syncpill';p.className='syncpill';p.onclick=syncClick;document.body.appendChild(p)}
+  const show=SY.on&&(st==='busy'||st==='err'||!tokOK());
+  p.className='syncpill'+(show?' show':'')+(st==='busy'?' busy':st==='err'?' err':'');
+  p.textContent=st==='busy'?'☁ 同期中…':st==='err'?'⚠ 同期できませんでした':'☁ タップして同期';}
+function syncClick(){if(syncState==='err'&&syncErr&&tokOK()){toast(syncErr,6000)}if(tokOK())syncNow();else gAuth(true)}
+function syncOff(){if(!confirm('この端末の同期をやめますか？（データはこの端末とGoogleドライブの両方に残ります）'))return;SY={};saveSY();setSync('');render()}
+function syncBoot(){if(!syncEnabled())return;gReturn();
+  if(SY.on&&!tokOK()&&Date.now()-(SY.tryAt||0)>10*60e3){SY.tryAt=Date.now();saveSY();gAuth(false);return true}
+  setSync(syncState);if(syncErr)toast(syncErr,6000);if(tokOK())syncNow();
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible'||!SY.on)return;
+    if(tokOK()){if(!syncBusy)syncNow()}else if(Date.now()-(SY.tryAt||0)>10*60e3){SY.tryAt=Date.now();saveSY();gAuth(false)}else setSync('need')});
+  setInterval(()=>{if(document.visibilityState==='visible'&&tokOK()&&!syncBusy)syncNow()},90e3)}
+
+function $(s){return document.querySelector(s)}
+{const n=importNotion();if(n)setTimeout(()=>{document.body.insertAdjacentHTML('beforeend',`<div id="toast" style="position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#2b2a28;color:#fff;padding:10px 20px;border-radius:24px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:20;font-size:14px">Notionのタスクとアイデアを${n}件取り込みました</div>`);setTimeout(()=>$('#toast')?.remove(),5000)},300)}
+if(!syncEnabled()||!syncBoot()){render();booted=true;syncEnabled()&&setSync(syncState)}
+</script>
+</body>
+</html>
