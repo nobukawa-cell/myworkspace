@@ -900,7 +900,7 @@ function pCal(){
     body=`<div class="gcals">${g.map((id,i)=>`<span class="gc"><button class="gdot" title="色を変更" style="background:${gcolor(id)}" onclick="gcalColorPop(${i},this)"></button>${esc(id)}<button title="外す" onclick="S.settings.gcals.splice(${i},1);save();render()">×</button></span>`).join('')}
       <form id="gcalForm"><input name="u" placeholder="${g.length?'カレンダーID・他の人のGmailアドレスを追加':'自分のGmailアドレス（例：yourname@gmail.com）'}"><button class="btn primary" style="white-space:nowrap">追加</button></form>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" ${S.settings.holidays!==false?'checked':''} onchange="S.settings.holidays=this.checked;save();render()">🎌 日本の祝日を表示</label>${S.settings.holidays!==false?`<button class="gdot" title="祝日の色" style="background:${gcolor(HOLIDAY_CAL)}" onclick="gcalColorPop(-1,this)"></button>`:''}</div>
-      ${g.length?(gApiMode()?gGridHTML(y,m):`<iframe class="gframe" src="${esc(embedFor(S.settings.holidays!==false?[...g,HOLIDAY_CAL]:g))}"></iframe>`)+`
+      ${g.length?(gApiMode()?gGridHTML(y,m):(syncEnabled()?`<div class="gerr">iPhoneでは、Googleにログインすると予定が表示されます。<button class="btn primary" style="margin-left:8px" onclick="gAuth(true)">Googleにログインして表示</button></div>`:'')+`<iframe class="gframe" src="${esc(embedFor(S.settings.holidays!==false?[...g,HOLIDAY_CAL]:g))}"></iframe>`)+`
       <div class="row" style="margin-top:12px"><a class="btn" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">Googleカレンダーを別タブで開く ↗</a></div>
       <div class="hint" style="margin-top:14px;font-size:13px"><b>自分の2つ目のカレンダー（例：「まい」）を出すには</b>
         <ol><li>パソコンでGoogleカレンダーを開き、左の「マイカレンダー」で出したいカレンダー（まい）にマウスを乗せて「︙」→「設定と共有」</li>
