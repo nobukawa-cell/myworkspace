@@ -131,6 +131,14 @@ h1.title{font-size:32px;font-weight:700;margin:10px 0 4px;outline:none}
 .cal .d.sat .n{color:#4a78b5}
 .cal .holname{display:block;font-size:10.5px;color:var(--late);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cal .d.today .n{background:var(--accent);color:#fff;border-radius:50%;width:22px;height:22px;display:inline-grid;place-items:center}
+.gev{display:block;width:100%;text-align:left;font-size:11px;padding:1px 5px;border-radius:4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff;line-height:1.5}
+.gev.timed{background:none!important;color:var(--ink,#2b2a28);padding-left:2px}.gev.timed i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:1px}
+.cal .d.sel{background:rgba(180,140,100,.10)}
+.gday{margin-top:14px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px}
+.gday h3{margin:0 0 8px;font-size:15px}.gday .it{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);font-size:14px;color:inherit;text-decoration:none}
+.gday .it .t{width:84px;flex:none;color:var(--sub);font-size:12.5px}.gday .it i{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.gerr{font-size:12.5px;background:#fff6dc;border-radius:10px;padding:8px 12px;margin:0 0 10px;line-height:1.6}
+@media (max-width:760px){.gev{font-size:9.5px;padding:0 3px}.gev.timed{border-left:3px solid;padding-left:3px}.gev.timed i{display:none}.gday .it .t{width:70px}}
 .ev{display:block;width:100%;text-align:left;font-size:11.5px;padding:1px 6px;border-radius:5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
 .gframe{width:100%;height:680px;border:none;border-radius:var(--radius);box-shadow:var(--shadow);background:#fff}
 .hint{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px 24px}
@@ -174,7 +182,7 @@ main.darkbg .col{background:rgba(255,255,255,.06)}
 .weather .temp{font-size:28px;font-weight:700;line-height:1.1}
 .weather .desc{font-size:12px;opacity:.8}
 .weather .day{text-align:center;min-width:72px}
-.weather .day b{display:block;font-size:13px;margin-bottom:6px;letter-spacing:.03em}
+.weather .day .sh{display:none}.weather .day b{display:block;font-size:13px;margin-bottom:6px;letter-spacing:.03em}
 .weather .day .i{font-size:26px;line-height:1.3}
 .weather .day .hi{font-size:13px;margin-top:4px}
 .weather .day .lo{font-size:12px;opacity:.65}
@@ -194,7 +202,8 @@ main.darkbg .col{background:rgba(255,255,255,.06)}
 .gcals .gc button{color:var(--sub);padding:0 4px}
 .gcals form{display:flex;gap:6px;flex:1;min-width:260px}
 .gcals input{flex:1;padding:6px 12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
-@media (max-width:760px){.weather{grid-template-columns:repeat(7,72px);padding:20px}.weather .now{grid-column:1/-1;margin-bottom:12px}}
+@media (max-width:760px){.weather{grid-template-columns:repeat(7,minmax(0,1fr));padding:18px 12px;gap:2px}.weather .now{grid-column:1/-1;margin-bottom:12px;padding:0 6px}
+  .weather .day{min-width:0}.weather .day .lg{display:none}.weather .day .sh{display:inline!important}.gev .tm{display:none}.weather .day b{font-size:11px;margin-bottom:2px}.weather .day .i{font-size:19px}.weather .day .hi{font-size:12px}.weather .day .lo{font-size:11px}.weather .wxbtn{opacity:.8}}
 
 /* Notion風テーブル */
 .vtabs{display:flex;gap:4px;align-items:center;border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:8px;flex-wrap:wrap}
@@ -661,7 +670,7 @@ async function drawWeather(){
   const [ci,cd]=WMO(wx.current.weather_code);
   el2.innerHTML=`<button class="wxbtn" id="wxbtn" onclick="event.stopPropagation();toggleBgPop('wx')">🎨 背景色</button><div class="now"><div class="city" onclick="changeCity()" title="クリックで地域を変更">${esc(w.name)}<small>WEATHER</small></div>
     <span style="font-size:30px">${ci}</span><div><div class="temp">${Math.round(wx.current.temperature_2m)}℃</div><div class="desc">${cd}</div></div></div>
-    ${wx.daily.time.map((t,i)=>{const d=new Date(t+'T00:00');return `<div class="day"><b>${d.toLocaleDateString('en-US',{weekday:'long'})}</b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
+    ${wx.daily.time.map((t,i)=>{const d=new Date(t+'T00:00');return `<div class="day"><b><span class="lg">${d.toLocaleDateString('en-US',{weekday:'long'})}</span><span class="sh">${d.toLocaleDateString('en-US',{weekday:'short'})}</span></b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
       <div class="hi">${Math.round(wx.daily.temperature_2m_max[i])}℃</div><div class="lo">${Math.round(wx.daily.temperature_2m_min[i])}℃</div></div>`}).join('')}`;
   enify(el2);
 }
@@ -891,7 +900,7 @@ function pCal(){
     body=`<div class="gcals">${g.map((id,i)=>`<span class="gc"><button class="gdot" title="色を変更" style="background:${gcolor(id)}" onclick="gcalColorPop(${i},this)"></button>${esc(id)}<button title="外す" onclick="S.settings.gcals.splice(${i},1);save();render()">×</button></span>`).join('')}
       <form id="gcalForm"><input name="u" placeholder="${g.length?'カレンダーID・他の人のGmailアドレスを追加':'自分のGmailアドレス（例：yourname@gmail.com）'}"><button class="btn primary" style="white-space:nowrap">追加</button></form>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" ${S.settings.holidays!==false?'checked':''} onchange="S.settings.holidays=this.checked;save();render()">🎌 日本の祝日を表示</label>${S.settings.holidays!==false?`<button class="gdot" title="祝日の色" style="background:${gcolor(HOLIDAY_CAL)}" onclick="gcalColorPop(-1,this)"></button>`:''}</div>
-      ${g.length?`<iframe class="gframe" src="${esc(embedFor(S.settings.holidays!==false?[...g,HOLIDAY_CAL]:g))}"></iframe>
+      ${g.length?(gApiMode()?gGridHTML(y,m):`<iframe class="gframe" src="${esc(embedFor(S.settings.holidays!==false?[...g,HOLIDAY_CAL]:g))}"></iframe>`)+`
       <div class="row" style="margin-top:12px"><a class="btn" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">Googleカレンダーを別タブで開く ↗</a></div>
       <div class="hint" style="margin-top:14px;font-size:13px"><b>自分の2つ目のカレンダー（例：「まい」）を出すには</b>
         <ol><li>パソコンでGoogleカレンダーを開き、左の「マイカレンダー」で出したいカレンダー（まい）にマウスを乗せて「︙」→「設定と共有」</li>
@@ -901,17 +910,63 @@ function pCal(){
         <ol style="margin-bottom:0"><li>相手のカレンダーが自分に共有されている必要があります。Googleカレンダーの左側「他のカレンダー」に相手が出ていれば共有済みです</li>
         <li>出ていなければ、相手に「設定と共有」→「特定のユーザーまたはグループと共有」で自分を追加してもらうか、会社のGoogleアカウントなら「他のカレンダー」の＋から相手を追加します</li>
         <li>共有されたら、相手のメールアドレスを上の欄に追加すると、ここに色分けで重なって表示されます</li></ol>
-        <p class="lead" style="margin:8px 0 0;font-size:12px">「権限がありません」と出る場合は、このブラウザでGoogleにログインしてから再読み込みしてください。</p></div>`
+        <p class="lead" style="margin:8px 0 0;font-size:12px">${gApiMode()?`いまは ${esc(SY.email||'')} として予定を読み込んでいます。見られないカレンダーは、このアドレスに共有してもらってください。`:'「権限がありません」と出る場合は、このブラウザでGoogleにログインしてから再読み込みしてください。'}</p></div>`
       :`<div class="hint">まず自分のGmailアドレスを入れて「追加」を押してください。そのあと、他の人のアドレスも追加できます。</div>`}`;
   }
   $('#main').innerHTML=`<div class="page">
     <h1 class="title">🗓️ <span class="en" style="font-size:40px">Calendar</span></h1><p class="lead">タスクの期限とGoogleカレンダーの予定</p>
     <div class="cal-top">
-      ${calTab==='mine'?`<button class="btn" onclick="moveMonth(-1)">‹</button><span class="m">${y}年 ${m+1}月</span><button class="btn" onclick="moveMonth(1)">›</button><button class="btn" onclick="calMonth=new Date();render()">今日</button>`:''}
+      ${calTab==='mine'||gApiMode()?`<button class="btn" onclick="moveMonth(-1)">‹</button><span class="m">${y}年 ${m+1}月</span><button class="btn" onclick="moveMonth(1)">›</button><button class="btn" onclick="calMonth=new Date();render()">今日</button>`:''}
       <div class="tabs"><button class="${calTab==='mine'?'on':''}" onclick="calTab='mine';render()">タスク</button><button class="${calTab==='g'?'on':''}" onclick="calTab='g';render()">Googleカレンダー</button></div>
     </div>${body}</div>`;
   const gf=$('#gcalForm');if(gf)gf.onsubmit=e=>{e.preventDefault();const ids=calIds(gf.u.value);if(!ids.length)return gf.u.focus();ids.forEach(id=>{if(!S.settings.gcals.includes(id))S.settings.gcals.push(id)});save();render()};
 }
+
+/* ---------- Googleカレンダーの予定をAPIで読んで表示（iPhoneでも見られる） ---------- */
+const GEV={};let gDay=null;
+const gApiMode=()=>syncEnabled()&&SY.on;
+const gHasScope=()=>(SY.scope||'').includes('calendar');
+const dstr=d=>new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function gIds(){return S.settings.holidays!==false?[...S.settings.gcals,HOLIDAY_CAL]:[...S.settings.gcals]}
+async function gLoadMonth(y,m){const key=y+'-'+m;if(GEV[key]?.loading)return;
+  const ids=gIds(),have=GEV[key];if(have&&!have.loading&&ids.every(id=>have.cals[id])&&Date.now()-have.at<5*60e3)return;
+  GEV[key]={loading:true,cals:have?.cals||{},at:0};
+  const t0=new Date(y,m,1-7).toISOString(),t1=new Date(y,m+1,8).toISOString();
+  await Promise.all(ids.map(async id=>{try{
+      const r=await gfetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(id)}/events?singleEvents=true&orderBy=startTime&maxResults=500&timeMin=${encodeURIComponent(t0)}&timeMax=${encodeURIComponent(t1)}`);
+      GEV[key].cals[id]={items:(await r.json()).items||[]}}
+    catch(e){GEV[key].cals[id]={err:e.auth?'auth':(e.status===404||e.status===403&&!/disabled|accessNotConfigured|SERVICE_DISABLED/.test(e.message))?'noaccess':/disabled|accessNotConfigured|SERVICE_DISABLED/.test(e.message)?'api':'other',msg:e.message}}}));
+  GEV[key].loading=false;GEV[key].at=Date.now();if(route.v==='calendar'&&calTab==='g')render()}
+function gEventsOn(key,ds){const out=[];const G=GEV[key];if(!G)return out;
+  for(const id in G.cals){const c=G.cals[id];if(!c.items||!gIds().includes(id))continue;
+    c.items.forEach(e=>{if(e.status==='cancelled')return;let s,en,all=false;
+      if(e.start?.date){all=true;s=e.start.date;en=e.end?.date||s;if(!(ds>=s&&ds<en))return}
+      else{const a=new Date(e.start.dateTime),b=new Date(e.end?.dateTime||e.start.dateTime);s=dstr(a);en=dstr(new Date(b-1));if(!(ds>=s&&ds<=en))return}
+      out.push({id,all,title:e.summary||(id===HOLIDAY_CAL?'祝日':'（予定あり）'),start:e.start.dateTime?new Date(e.start.dateTime):null,end:e.end?.dateTime?new Date(e.end.dateTime):null,link:e.htmlLink,color:gcolor(id)})})}
+  return out.sort((a,b)=>(b.all-a.all)||((a.start||0)-(b.start||0)))}
+const hm=d=>d.toLocaleTimeString('ja-JP',{hour:'numeric',minute:'2-digit'});
+function gGridHTML(y,m){
+  if(!tokOK())return `<div class="gerr">Googleの確認が切れています。<button class="btn primary" style="margin-left:8px" onclick="gAuth(true)">Googleにログインして表示</button></div>`;
+  if(!gHasScope())return `<div class="gerr">Googleカレンダーを読む許可がまだありません。<button class="btn primary" style="margin-left:8px" onclick="gAuth(true)">許可して表示</button><br><small>ログイン画面で「カレンダーの表示」にチェックを入れてください。</small></div>`;
+  const key=y+'-'+m,G=GEV[key];gLoadMonth(y,m);
+  const errs=G?Object.entries(G.cals).filter(([id,c])=>c.err&&gIds().includes(id)):[];
+  let note='';
+  if(errs.some(([,c])=>c.err==='api'))note+=`<div class="gerr">⚠ Google Cloud で「Google Calendar API」がまだ有効になっていません。<a href="https://console.cloud.google.com/apis/library/calendar-json.googleapis.com" target="_blank" rel="noopener">こちら</a>を開いて「有効にする」を押し、少し待ってから再読み込みしてください。</div>`;
+  const na=errs.filter(([,c])=>c.err==='noaccess').map(([id])=>id);
+  if(na.length)note+=`<div class="gerr">⚠ 次のカレンダーは、ログイン中のアカウント（${esc(SY.email||'')}）からは見られません：<b>${na.map(esc).join('、')}</b><br>そのカレンダーの持ち主のGoogleカレンダーで「設定と共有」→「特定のユーザーまたはグループと共有」に ${esc(SY.email||'ログイン中のアドレス')} を追加（権限は「予定の表示（すべての予定の詳細）」）すると表示されます。</div>`;
+  if(errs.some(([,c])=>c.err==='other'))note+=`<div class="gerr">⚠ 一部の予定を読み込めませんでした。少し待ってから再読み込みしてください。</div>`;
+  const first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());let cells='';
+  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const ds=dstr(d);
+    const evs=gEventsOn(key,ds),hol=evs.find(e=>e.id===HOLIDAY_CAL)||(S.settings.holidays!==false&&HOLIDAYS[ds]);
+    cells+=`<div class="d ${d.getMonth()!==m?'other':''} ${ds===today()?'today':''} ${hol||d.getDay()===0?'hol':''} ${d.getDay()===6?'sat':''} ${ds===gDay?'sel':''}" onclick="gDay='${ds}';render()"><span class="n">${d.getDate()}</span>
+      ${evs.slice(0,4).map(e=>`<span class="gev ${e.all?'':'timed'}" style="background:${e.color};border-color:${e.color}">${e.all?'':`<i style="background:${e.color}"></i><b class="tm" style="font-weight:400">${hm(e.start)} </b>`}${esc(e.title)}</span>`).join('')}${evs.length>4?`<span class="gev timed">ほか${evs.length-4}件</span>`:''}</div>`;
+    if(i===34&&new Date(start.getTime()+35*864e5).getMonth()!==m)break}
+  const sel=gDay&&gDay.slice(0,7)===`${y}-${String(m+1).padStart(2,'0')}`?gDay:null;
+  const list=sel?gEventsOn(key,sel):[];
+  return `${note}${G?.loading&&!Object.keys(G.cals).length?'<p class="lead">予定を読み込み中…</p>':''}
+    <div class="cal">${'日月火水木金土'.split('').map(w=>`<div class="dw">${w}</div>`).join('')}${cells}</div>
+    ${sel?`<div class="gday"><h3>${new Date(sel+'T00:00').toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'})}の予定</h3>
+      ${list.length?list.map(e=>`<a class="it" href="${esc(e.link||'#')}" target="_blank" rel="noopener"><span class="t">${e.all?'終日':hm(e.start)+(e.end?'–'+hm(e.end):'')}</span><i style="background:${e.color}"></i><span>${esc(e.title)}</span></a>`).join(''):'<div class="lead" style="font-size:13px">予定はありません</div>'}</div>`:'<p class="lead" style="margin-top:10px;font-size:12.5px">日付をタップすると、その日の予定が一覧で出ます。</p>'}`}
 /* 入力（メールアドレス・カレンダーID・埋め込みコード・URL）からカレンダーIDを取り出す */
 function calIds(v){
   v=v.trim();const out=[];
@@ -1057,7 +1112,7 @@ function importData(){const f=document.createElement('input');f.type='file';f.ac
 /* ---------- Googleドライブで同期（PC・iPhone共通） ---------- */
 const GOOGLE_CLIENT_ID='127251143592-3vg9ste8i6u14gi431stg4cch06gq4on.apps.googleusercontent.com';
 const DAPI='https://www.googleapis.com/drive/v3',UAPI='https://www.googleapis.com/upload/drive/v3',DOC='myworkspace.json';
-const SCOPE='https://www.googleapis.com/auth/drive.appdata email';
+const SCOPE='https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/calendar.readonly email';
 let SY={};try{SY=JSON.parse(localStorage.getItem('myworkspace.sync'))||{}}catch(e){}
 const saveSY=()=>{try{localStorage.setItem('myworkspace.sync',JSON.stringify(SY))}catch(e){}};
 let syncState='',syncBusy=false,pushTimer=null,syncErr='';
@@ -1074,7 +1129,7 @@ function gReturn(){const h=new URLSearchParams(location.hash.slice(1));if(!h.has
   let o={};try{o=JSON.parse(localStorage.getItem('myworkspace.oauth'))||{}}catch(e){}
   history.replaceState(null,'',location.pathname+location.search);
   if(h.get('state')!==o.st)return;
-  if(h.get('access_token')){SY.on=true;SY.tok=h.get('access_token');SY.exp=Date.now()+(+h.get('expires_in')-120)*1000;saveSY()}
+  if(h.get('access_token')){SY.on=true;SY.tok=h.get('access_token');SY.exp=Date.now()+(+h.get('expires_in')-120)*1000;SY.scope=h.get('scope')||'';saveSY()}
   else if(h.get('error')){syncState='need';if(!o.silent)syncErr='Googleにログインできませんでした（'+h.get('error')+'）'}}
 async function gfetch(url,opt={}){if(!tokOK())throw Object.assign(Error('auth'),{auth:1});
   const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+SY.tok}});
