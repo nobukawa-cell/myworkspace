@@ -665,16 +665,21 @@ async function drawWeather(){
   const el=$('#weather');if(!el)return;
   const w=S.settings.weather;
   if(!wx||Date.now()-wxAt>30*6e4||wx._key!==w.lat+','+w.lon){
-    try{
-      const u=`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`;
-      wx=await (await fetch(u)).json();wx._key=w.lat+','+w.lon;wxAt=Date.now();
-    }catch(e){el.innerHTML=`<div class="msg">天気を取得できませんでした（インターネット接続を確認してください）</div>`;return}
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=7`;
+    let err='';
+    for(let k=0;k<2;k++){try{const r=await fetch(u,{cache:'no-store'});const j=await r.json();
+        if(!r.ok||!j.current||!j.daily)throw Error(j.reason||('HTTP '+r.status));
+        wx=j;wx._key=w.lat+','+w.lon;wxAt=Date.now();try{localStorage.setItem('myworkspace.wx',JSON.stringify(wx))}catch(e){}err='';break}
+      catch(e){err=e.message;if(!k)await new Promise(o=>setTimeout(o,2500))}}
+    if(err){let old=null;try{old=JSON.parse(localStorage.getItem('myworkspace.wx'))}catch(e){}
+      if(old?.daily&&old._key===w.lat+','+w.lon){wx=old;wxAt=Date.now()-25*6e4}
+      else{console.warn('weather',err);const e2=$('#weather');if(e2)e2.innerHTML=`<div class="msg">天気を取得できませんでした（${esc(err)}）　<button class="btn" style="margin-left:6px" onclick="wx=null;drawWeather()">もう一度</button></div>`;return}}
   }
   const el2=$('#weather');if(!el2)return;
   const [ci,cd]=WMO(wx.current.weather_code);
   el2.innerHTML=`<button class="wxbtn" id="wxbtn" onclick="event.stopPropagation();toggleBgPop('wx')">🎨 背景色</button><div class="now"><div class="city" onclick="changeCity()" title="クリックで地域を変更">${esc(w.name)}<small>WEATHER</small></div>
     <span style="font-size:30px">${ci}</span><div><div class="temp">${Math.round(wx.current.temperature_2m)}℃</div><div class="desc">${cd}</div></div></div>
-    ${wx.daily.time.map((t,i)=>{const d=new Date(t+'T00:00');return `<div class="day"><b><span class="lg">${d.toLocaleDateString('en-US',{weekday:'long'})}</span><span class="sh">${d.toLocaleDateString('en-US',{weekday:'short'})}</span></b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
+    ${wx.daily.time.map((t,i)=>{if(t<today())return '';const d=new Date(t+'T00:00');return `<div class="day"><b><span class="lg">${d.toLocaleDateString('en-US',{weekday:'long'})}</span><span class="sh">${d.toLocaleDateString('en-US',{weekday:'short'})}</span></b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
       <div class="hi">${Math.round(wx.daily.temperature_2m_max[i])}℃</div><div class="lo">${Math.round(wx.daily.temperature_2m_min[i])}℃</div></div>`}).join('')}`;
   enify(el2);
 }
