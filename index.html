@@ -80,6 +80,23 @@ h1.title{font-size:32px;font-weight:700;margin:10px 0 4px;outline:none}
 .bar{height:4px;background:var(--line);border-radius:4px;margin:10px 0 8px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--accent);border-radius:4px}
 .gcard .mini{font-size:12px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hgrid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:20px;align-items:stretch}
+.gallery.vert{grid-template-columns:1fr;gap:12px;align-content:start}
+.spanel{display:flex;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-height:340px}
+.sp-list{flex:1;min-width:0;padding:16px 6px 10px 18px;max-height:560px;overflow:auto}
+.sp-list .list{box-shadow:none;background:transparent;border-radius:0}
+.sp-list .li{padding:11px 10px 11px 2px}
+.sp-h{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-size:16px}.sp-dot{width:10px;height:10px;border-radius:50%}.sp-n{font-size:12px;color:var(--sub)}
+.stabs{display:flex;flex-direction:column;gap:4px;padding:12px 10px;border-left:1px solid var(--line);flex:none}
+.stabs button{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;font-size:13px;white-space:nowrap;color:var(--text);text-align:left;transition:.15s}
+.stabs button:hover:not(.on){background:var(--accent-soft)}
+.stabs button.on{font-weight:700}
+.stabs i{width:8px;height:8px;border-radius:50%;flex:none}
+.stabs small{margin-left:auto;padding-left:10px;font-size:11px;opacity:.7}
+@media (max-width:760px){.hgrid{grid-template-columns:1fr;gap:16px}
+  .gallery.vert{grid-template-columns:1fr 1fr 1fr;gap:8px}.gallery.vert .gcard .bd{padding:10px 10px}.gallery.vert .gcard .nm{font-size:14px}.gallery.vert .gcard.new{min-height:0;grid-column:1/-1;padding:8px}
+  .spanel{flex-direction:column;min-height:0}.stabs{order:-1;flex-direction:row;overflow-x:auto;border-left:none;border-bottom:1px solid var(--line);padding:8px}
+  .stabs{gap:2px;padding:6px;justify-content:space-between}.stabs button{padding:7px 8px;font-size:12.5px;gap:5px}.stabs small{display:none}.stabs i{width:7px;height:7px}.sp-list{padding:12px 4px 6px 14px;max-height:none}}
 .gcard.new{display:flex;align-items:center;justify-content:center;min-height:110px;border:1.5px dashed var(--line);background:transparent;box-shadow:none;color:var(--sub)}
 
 .section-h{display:flex;align-items:center;gap:10px;margin:34px 0 12px}
@@ -677,7 +694,7 @@ function pHome(){
       <button class="qbtn" onclick="homeTask()"><span class="qi">✓</span><span><b>Task</b><small>タスクを追加</small></span><span class="qp">＋</span></button>
       <button class="qbtn" onclick="homeMemo()"><span class="qi">📝</span><span><b>Memo</b><small>サッとメモ</small></span><span class="qp">＋</span></button>
     </div>
-    <div class="gallery">
+    <div class="hgrid"><div class="gallery vert">
       ${S.categories.map(c=>{const ts=tasksOf(c.id),dn=ts.filter(t=>t.status==='done').length,nx=ts.filter(t=>t.status!=='done');
         return `<button class="gcard" onclick="go('cat','${c.id}')">
         <div class="bd"><div class="nm">${c.icon?`<span>${c.icon}</span>`:''}${esc(c.name)}</div>
@@ -685,7 +702,7 @@ function pHome(){
         <div class="mini">${nx.length?`次：${esc(nx[0].title)}`:'すべて完了 ✨'}</div>
         <div class="mini">${dn}/${ts.length} 完了</div></div></button>`}).join('')}
       <button class="gcard new" onclick="newCat()">＋ 新しい分類</button>
-    </div>
+    </div>${statusPanel()}</div>
     <div class="section-h"><h2>🗓️ 近い予定</h2><span class="s">期限が近い順</span></div>
     ${listHTML(up,'期限付きのタスクはありません')}
   </div>`;
@@ -813,6 +830,13 @@ function listHTML(ts,empty='タスクがありません'){
     ${t.due?`<span class="meta ${isLate(t)?'late':''}" style="margin:0">${fmtDate(t.due)}${t.time?' '+t.time:''}</span>`:''}
     <span class="cat">${t.type?`<span class="chip type" style="margin-right:6px">${esc(t.type)}</span>`:''}${c?(c.icon?c.icon+' ':'')+esc(c.name):''}</span></div>`}).join('')}</div>`;
 }
+function statusPanel(){const cur=S.settings.homeStatus||'doing',st=STATUSES.find(x=>x.id===cur)||STATUSES[1];
+  const cnt=id=>S.tasks.filter(t=>t.status===id&&cat(t.catId)).length;
+  const ts=S.tasks.filter(t=>t.status===cur&&cat(t.catId)).sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
+  const P=STATUS_PILL[cur]||['#eee','#333','#999'];
+  return `<div class="spanel"><div class="sp-list"><div class="sp-h"><span class="sp-dot" style="background:${P[2]}"></span><b>${st.label}</b><span class="sp-n">${ts.length}件</span></div>
+    ${listHTML(ts,st.label+'のタスクはありません')}</div>
+    <div class="stabs">${STATUSES.map(x=>{const p=STATUS_PILL[x.id]||P;return `<button class="${x.id===cur?'on':''}" style="${x.id===cur?`background:${p[0]};color:${p[1]}`:''}" onclick="S.settings.homeStatus='${x.id}';save();render()"><i style="background:${p[2]}"></i>${x.label}<small>${cnt(x.id)}</small></button>`}).join('')}</div></div>`}
 const fmtDate=d=>{const[y,m,dd]=d.split('-');return `${+m}/${+dd}`};
 
 function pCat(){
