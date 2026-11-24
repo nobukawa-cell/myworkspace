@@ -161,10 +161,18 @@ main{transition:background-color .3s}
 main.darkbg{--text:#f2efe9;--sub:#bdb6ab;--line:rgba(255,255,255,.14);--card:rgba(255,255,255,.09);--accent-soft:rgba(255,255,255,.12);color:var(--text)}
 main.darkbg .col{background:rgba(255,255,255,.06)}
 .bgbtn{position:fixed;top:14px;right:18px;z-index:5;background:var(--card);box-shadow:var(--shadow);border-radius:20px;padding:6px 14px;font-size:12.5px;color:var(--text)}
-.bgpop{position:fixed;top:52px;right:18px;z-index:6;background:#fff;color:#2b2a28;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:14px;width:248px}
+.bgpop{position:fixed;top:52px;right:18px;z-index:6;max-height:calc(100vh - 70px);overflow:auto;background:#fff;color:#2b2a28;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:14px;width:248px}
 .bgpop .sw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:8px 0 12px}
 .bgpop .sw button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.12)}
 .bgpop .sw button.on{outline:2px solid #b5835a;outline-offset:2px}
+.bgpop .bgimg{border-top:1px solid #eee;margin-top:12px;padding-top:12px}
+.bgpop .thumb{height:70px;border-radius:10px;background-size:cover;background-position:center;margin:8px 0}
+.mini-btn{white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:14px;background:#f1ebe2;color:#2b2a28}.mini-btn.on{background:#b5835a;color:#fff}
+main.hasimg{background-size:cover;background-position:center;background-attachment:fixed;background-repeat:no-repeat}
+main.darkbg .lead,main.darkbg .greet{text-shadow:0 1px 8px rgba(0,0,0,.35)}
+aside,.tabbar{transition:background-color .3s}
+aside.darkside,.tabbar.darkside{--text:#f2efe9;--sub:#c9c2b6;--line:rgba(255,255,255,.14);--accent-soft:rgba(255,255,255,.13);color:var(--text)}
+@media (max-width:760px){main.hasimg{background-attachment:scroll}}
 .bgpop .r{display:flex;align-items:center;gap:8px;font-size:12px}
 .bgpop input[type=color]{width:36px;height:28px;border:none;padding:0;background:none;cursor:pointer}
 .flip{display:flex;align-items:center;gap:6px}
@@ -297,7 +305,7 @@ main.darkbg .col{background:rgba(255,255,255,.06)}
 .hquick{display:flex;gap:10px;margin:-14px 0 28px;flex-wrap:wrap}
 .qbtn{display:inline-flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);border-radius:999px;padding:7px 18px 7px 7px;color:inherit;transition:.15s}
 .qbtn:hover{transform:translateY(-1px)}
-.qbtn .qi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:#f1ebe2;flex:none}
+.qbtn .qi{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:var(--accent-soft);flex:none}
 .qbtn b{display:block;font-size:17px;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:600;line-height:1}
 .qbtn small{display:none}
 .qbtn .qp{font-size:15px;color:var(--accent);margin-left:2px}
@@ -603,11 +611,32 @@ const BG_SWATCHES=['','#ffffff','#f3ede4','#efe6dc','#f6e9e6','#fbeee0','#eef2e8
 const bgKey=()=>route.v==='cat'?route.id:route.v;
 function lum(h){const n=parseInt(h.slice(1),16),c=[n>>16,n>>8&255,n&255].map(v=>{v/=255;return v<=.03928?v/12.92:((v+.055)/1.055)**2.4});return .2126*c[0]+.7152*c[1]+.0722*c[2]}
 function applyBg(){
-  S.settings.bg??={};const c=S.settings.bg[bgKey()]||'';const m=$('#main');
-  m.style.backgroundColor=c;m.classList.toggle('darkbg',!!c&&lum(c)<.25);
-  if(!$('#bgbtn'))document.body.insertAdjacentHTML('beforeend','<button class="bgbtn" id="bgbtn" onclick="toggleBgPop()">🎨 背景色</button>');
+  paintBg();
+  if(!$('#bgbtn'))document.body.insertAdjacentHTML('beforeend','<button class="bgbtn" id="bgbtn" onclick="toggleBgPop()">🎨 背景</button>');
   $('#bgpop')?.remove();
 }
+
+/* ---------- 背景画像・サイドバーの色合わせ ---------- */
+const hex2=h=>{const n=parseInt(h.slice(1),16);return [n>>16,n>>8&255,n&255]};
+const rgb2=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix=(a,b,t)=>{const x=hex2(a),y=hex2(b);return rgb2(x.map((v,i)=>v+(y[i]-v)*t))};
+function curImg(){const I=S.settings.bgImg||{},k=bgKey();return k in I?I[k]:I['*']||null}
+function paintBg(){S.settings.bg??={};const m=$('#main'),side=$('#side'),tab=$('#tabbar');
+  const c=S.settings.bg[bgKey()]||'',im=curImg();let tone=c;
+  if(im){const f=im.fade||0,dk=lum(im.tone)<.3,ov=dk?'0,0,0':'255,255,255';
+    m.style.backgroundImage=(f?`linear-gradient(rgba(${ov},${f}),rgba(${ov},${f})),`:'')+`url('${im.src}')`;m.classList.add('hasimg');
+    tone=mix(im.tone,dk?'#000000':'#ffffff',f);m.style.backgroundColor=tone}
+  else{m.style.backgroundImage='';m.classList.remove('hasimg');m.style.backgroundColor=c}
+  const dark=!!tone&&lum(tone)<.25;m.classList.toggle('darkbg',dark);
+  let sc='';if(tone)sc=im?(dark?mix(tone,'#000000',.25):mix(tone,'#ffffff',.55)):(dark?mix(tone,'#ffffff',.06):mix(tone,'#000000',.035));
+  [side,tab].forEach(el=>{if(!el)return;el.style.background=sc;el.style.borderColor=sc?(dark?'rgba(255,255,255,.1)':'rgba(0,0,0,.07)'):'';el.classList.toggle('darkside',!!sc&&lum(sc)<.25)});
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content',tone||'#f6f3ee')}
+function avgTone(cv){const t=document.createElement('canvas');t.width=t.height=16;const g=t.getContext('2d');g.drawImage(cv,0,0,16,16);const d=g.getImageData(0,0,16,16).data;let r=0,gg=0,b=0;for(let i=0;i<d.length;i+=4){r+=d[i];gg+=d[i+1];b+=d[i+2]}const n=d.length/4;return rgb2([r/n,gg/n,b/n])}
+function setImg(v,quiet){S.settings.bgImg??={};const k=bgKey();if(v===undefined)delete S.settings.bgImg[k];else S.settings.bgImg[k]=v;
+  if(!quiet){save();paintBg();const kk=bgKind;$('#bgpop')?.remove();toggleBgPop(kk)}}
+function pickBgImg(){pickImage((src,cv)=>{setImg({src,tone:avgTone(cv),fade:0})},1920,.78)}
+function bgFade(f){const im=curImg();if(!im)return;setImg({...im,fade:f})}
+function bgAll(){const im=curImg();if(!im)return;S.settings.bgImg={'*':im};save();paintBg();toast('すべてのページの背景にしました')}
 const WX_SWATCHES=['','#ffffff','#f3ede4','#e7eef6','#e6efe9','#f6e9e6','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#4a6fa5','#6b8f71','#b5835a','#c46a5a','#7a5c8e','#0e3b5c','#000000'];
 const wxLight=()=>!!S.settings.wxBg&&lum(S.settings.wxBg)>=.35;
 let bgKind='page';
@@ -616,14 +645,20 @@ function toggleBgPop(kind='page'){
   bgKind=kind;const wx=kind==='wx';
   const cur=wx?(S.settings.wxBg||''):(S.settings.bg[bgKey()]||'');
   const sw=wx?WX_SWATCHES:BG_SWATCHES;
-  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="bgpop" ${wx?`style="top:${Math.max(10,$('#weather').getBoundingClientRect().top)}px;right:auto;left:${$('#weather').getBoundingClientRect().right-260}px"`:''}><b style="font-size:13px">${wx?'天気予報の背景色':'このページの背景色'}</b>
+  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="bgpop" ${wx?`style="top:${Math.max(10,$('#weather').getBoundingClientRect().top)}px;right:auto;left:${$('#weather').getBoundingClientRect().right-260}px"`:''}><b style="font-size:13px">${wx?'天気予報の背景色':'このページの背景'}</b>
     <div class="sw">${sw.map(c=>`<button title="${c||'標準'}" class="${c===cur?'on':''}" style="background:${c||(wx?'#1b1b1b':'linear-gradient(135deg,#f6f3ee 50%,#1c1b19 50%)')}" onclick="event.stopPropagation();setBg('${c}')"></button>`).join('')}</div>
-    <div class="r"><input type="color" value="${cur||(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div></div>`);
+    <div class="r"><input type="color" value="${cur||(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div>
+    ${wx?'':(()=>{const im=curImg();return `<div class="bgimg"><b style="font-size:13px">背景画像</b>
+      ${im?`<div class="thumb" style="background-image:url('${im.src}')"></div>`:''}
+      <div class="r" style="flex-wrap:wrap;gap:6px"><button class="mini-btn" onclick="event.stopPropagation();pickBgImg()">🖼 ${im?'画像を変更':'画像を選ぶ'}</button>
+      ${im?`<button class="mini-btn" onclick="event.stopPropagation();setImg(null)">外す</button>`:''}</div>
+      ${im?`<div style="font-size:12px;margin-top:10px">文字を読みやすく</div><div class="r" style="margin-top:6px;gap:6px">${[[0,'なし'],[.3,'うすく'],[.55,'しっかり']].map(([f,l])=>`<button class="mini-btn ${(im.fade||0)===f?'on':''}" onclick="event.stopPropagation();bgFade(${f})">${l}</button>`).join('')}</div>
+      <div class="r" style="margin-top:8px"><a href="#" style="color:#b5835a" onclick="event.stopPropagation();bgAll();return false">この画像をすべてのページに使う</a></div>`:''}</div>`})()}</div>`);
 }
 function setBg(c,keep){
   if(bgKind==='wx'){S.settings.wxBg=c;save();const w=$('#weather');if(w){w.style.background=c;w.classList.toggle('light',wxLight())}}
   else{S.settings.bg??={};if(c)S.settings.bg[bgKey()]=c;else delete S.settings.bg[bgKey()];save();
-    const m=$('#main');m.style.backgroundColor=c;m.classList.toggle('darkbg',!!c&&lum(c)<.25);}
+    if(c&&curImg())setImg(null,true);paintBg();}
   if(!keep){const k=bgKind;$('#bgpop')?.remove();toggleBgPop(k)}}
 document.addEventListener('click',e=>{const p=$('#bgpop');if(p&&!p.contains(e.target)&&e.target.id!=='bgbtn'&&e.target.id!=='wxbtn')p.remove()});
 
@@ -1051,8 +1086,8 @@ function renameCat(id,name){const c=cat(id);name=name.trim();if(name&&c.name!==n
 function newTaskOn(ds){const c=S.categories[0];if(!c)return newCat();const t={id:uid(),catId:c.id,title:'',status:'todo',type:'',due:ds,time:'',priority:'',note:'',image:''};openTask(null,t)}
 
 /* ---------- image helpers ---------- */
-function pickImage(cb){const f=$('#fileIn');f.onchange=()=>{const file=f.files[0];f.value='';if(!file)return;
-  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const W=1400,s=Math.min(1,W/img.width);const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',.8))};img.src=r.result};r.readAsDataURL(file)};f.click()}
+function pickImage(cb,W0,Q){const f=$('#fileIn');f.onchange=()=>{const file=f.files[0];f.value='';if(!file)return;
+  const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const W=W0||1400,s=Math.min(1,W/img.width);const cv=document.createElement('canvas');cv.width=img.width*s;cv.height=img.height*s;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);cb(cv.toDataURL('image/jpeg',Q||.8),cv)};img.src=r.result};r.readAsDataURL(file)};f.click()}
 
 /* ---------- task dialog ---------- */
 let draft=null;
