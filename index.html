@@ -213,6 +213,9 @@ aside.darkside,.tabbar.darkside{--text:#f2efe9;--sub:#c9c2b6;--line:rgba(255,255
 .weather .day .lo{font-size:12px;opacity:.65}
 .weather .wxbtn{position:absolute;top:10px;right:12px;font-size:12px;color:inherit;opacity:0;transition:.2s;background:rgba(127,127,127,.25);padding:3px 10px;border-radius:12px}
 .weather:hover .wxbtn{opacity:.9}
+.weather.wx-clear{box-shadow:none;padding-left:4px;padding-right:4px}
+.weather.wx-glass{backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);box-shadow:0 4px 24px rgba(0,0,0,.08);border:1px solid rgba(255,255,255,.35)}
+.weather.wx-clear:not(.light){text-shadow:0 1px 6px rgba(0,0,0,.35)}.weather.wx-clear.light{text-shadow:0 1px 6px rgba(255,255,255,.6)}
 .weather.light{color:#2b2a28}
 .weather .msg{grid-column:1/-1;opacity:.7;font-size:13px}
 .types{display:flex;gap:6px;flex-wrap:wrap;margin:-10px 0 20px}
@@ -647,6 +650,7 @@ function paintBg(){S.settings.bg??={};const m=$('#main'),side=$('#side'),tab=$('
   const dark=!!tone&&lum(tone)<.25;m.classList.toggle('darkbg',dark);
   let sc='';if(tone)sc=im?(dark?mix(tone,'#000000',.25):mix(tone,'#ffffff',.55)):(dark?mix(tone,'#ffffff',.06):mix(tone,'#000000',.035));
   [side,tab].forEach(el=>{if(!el)return;el.style.background=sc;el.style.borderColor=sc?(dark?'rgba(255,255,255,.1)':'rgba(0,0,0,.07)'):'';el.classList.toggle('darkside',!!sc&&lum(sc)<.25)});
+  applyWx();
   document.querySelector('meta[name=theme-color]')?.setAttribute('content',tone||'#f6f3ee')}
 function avgTone(cv){const t=document.createElement('canvas');t.width=t.height=16;const g=t.getContext('2d');g.drawImage(cv,0,0,16,16);const d=g.getImageData(0,0,16,16).data;let r=0,gg=0,b=0;for(let i=0;i<d.length;i+=4){r+=d[i];gg+=d[i+1];b+=d[i+2]}const n=d.length/4;return rgb2([r/n,gg/n,b/n])}
 function setImg(v,quiet){S.settings.bgImg??={};const k=bgKey();if(v===undefined)delete S.settings.bgImg[k];else S.settings.bgImg[k]=v;
@@ -655,16 +659,21 @@ function pickBgImg(){pickImage((src,cv)=>{setImg({src,tone:avgTone(cv),fade:0})}
 function bgFade(f){const im=curImg();if(!im)return;setImg({...im,fade:f})}
 function bgAll(){const im=curImg();if(!im)return;S.settings.bgImg={'*':im};save();paintBg();toast('すべてのページの背景にしました')}
 const WX_SWATCHES=['','#ffffff','#f3ede4','#e7eef6','#e6efe9','#f6e9e6','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#4a6fa5','#6b8f71','#b5835a','#c46a5a','#7a5c8e','#0e3b5c','#000000'];
-const wxLight=()=>!!S.settings.wxBg&&lum(S.settings.wxBg)>=.35;
+const wxLight=()=>/^#[0-9a-f]{6}$/i.test(S.settings.wxBg||'')&&lum(S.settings.wxBg)>=.35;
+function applyWx(w=$('#weather')){if(!w)return;const v=S.settings.wxBg||'',sp=v==='clear'||v==='glass',dark=$('#main')?.classList.contains('darkbg');
+  w.classList.toggle('wx-clear',v==='clear');w.classList.toggle('wx-glass',v==='glass');
+  w.style.background=sp?(v==='clear'?'transparent':dark?'rgba(15,15,15,.28)':'rgba(255,255,255,.4)'):v;
+  w.classList.toggle('light',sp?!dark:wxLight())}
 let bgKind='page';
 function toggleBgPop(kind='page'){
   if($('#bgpop')){const same=bgKind===kind;$('#bgpop').remove();if(same)return}
   bgKind=kind;const wx=kind==='wx';
   const cur=wx?(S.settings.wxBg||''):(S.settings.bg[bgKey()]||'');
   const sw=wx?WX_SWATCHES:BG_SWATCHES;
-  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="bgpop" ${wx?`style="top:${Math.max(10,$('#weather').getBoundingClientRect().top)}px;right:auto;left:${$('#weather').getBoundingClientRect().right-260}px"`:''}><b style="font-size:13px">${wx?'天気予報の背景色':'このページの背景'}</b>
+  document.body.insertAdjacentHTML('beforeend',`<div class="bgpop" id="bgpop" ${wx?`style="top:${Math.max(10,$('#weather').getBoundingClientRect().top)}px;right:auto;left:${$('#weather').getBoundingClientRect().right-260}px"`:''}><b style="font-size:13px">${wx?'天気予報の背景':'このページの背景'}</b>
+    ${wx?`<div style="font-size:12px;margin-top:8px">背景になじませる</div><div class="r" style="margin:6px 0 2px;gap:6px">${[['clear','透明'],['glass','すりガラス']].map(([k,l])=>`<button class="mini-btn ${cur===k?'on':''}" onclick="event.stopPropagation();setBg('${k}')">${l}</button>`).join('')}</div>`:''}
     <div class="sw">${sw.map(c=>`<button title="${c||'標準'}" class="${c===cur?'on':''}" style="background:${c||(wx?'#1b1b1b':'linear-gradient(135deg,#f6f3ee 50%,#1c1b19 50%)')}" onclick="event.stopPropagation();setBg('${c}')"></button>`).join('')}</div>
-    <div class="r"><input type="color" value="${cur||(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div>
+    <div class="r"><input type="color" value="${/^#/.test(cur)?cur:(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div>
     ${wx?'':(()=>{const im=curImg();return `<div class="bgimg"><b style="font-size:13px">背景画像</b>
       ${im?`<div class="thumb" style="background-image:url('${im.src}')"></div>`:''}
       <div class="r" style="flex-wrap:wrap;gap:6px"><button class="mini-btn" onclick="event.stopPropagation();pickBgImg()">🖼 ${im?'画像を変更':'画像を選ぶ'}</button>
@@ -673,7 +682,7 @@ function toggleBgPop(kind='page'){
       <div class="r" style="margin-top:8px"><a href="#" style="color:#b5835a" onclick="event.stopPropagation();bgAll();return false">この画像をすべてのページに使う</a></div>`:''}</div>`})()}</div>`);
 }
 function setBg(c,keep){
-  if(bgKind==='wx'){S.settings.wxBg=c;save();const w=$('#weather');if(w){w.style.background=c;w.classList.toggle('light',wxLight())}}
+  if(bgKind==='wx'){S.settings.wxBg=c;save();applyWx()}
   else{S.settings.bg??={};if(c)S.settings.bg[bgKey()]=c;else delete S.settings.bg[bgKey()];save();
     if(c&&curImg())setImg(null,true);paintBg();}
   if(!keep){const k=bgKind;$('#bgpop')?.remove();toggleBgPop(k)}}
@@ -689,7 +698,7 @@ function pHome(){
       <div class="lead" style="margin:0">${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）</div>
       <p class="lead" style="margin:0">未完了のタスクが ${S.tasks.filter(t=>t.status!=='done').length} 件あります。</p></div>
     </div>
-    <div class="weather ${wxLight()?'light':''}" id="weather" style="${S.settings.wxBg?`background:${S.settings.wxBg}`:''}"><div class="msg">天気を読み込み中…</div></div>
+    <div class="weather" id="weather"><div class="msg">天気を読み込み中…</div></div>
     <div class="hquick">
       <button class="qbtn" onclick="homeTask()"><span class="qi">✓</span><span><b>Task</b><small>タスクを追加</small></span><span class="qp">＋</span></button>
       <button class="qbtn" onclick="homeMemo()"><span class="qi">📝</span><span><b>Memo</b><small>サッとメモ</small></span><span class="qp">＋</span></button>
@@ -743,7 +752,7 @@ async function drawWeather(){
   }
   const el2=$('#weather');if(!el2)return;
   const [ci,cd]=WMO(wx.current.weather_code);
-  el2.innerHTML=`<button class="wxbtn" id="wxbtn" onclick="event.stopPropagation();toggleBgPop('wx')">🎨 背景色</button><div class="now"><div class="city" onclick="changeCity()" title="クリックで地域を変更">${esc(w.name)}<small>WEATHER</small></div>
+  el2.innerHTML=`<button class="wxbtn" id="wxbtn" onclick="event.stopPropagation();toggleBgPop('wx')">🎨 背景</button><div class="now"><div class="city" onclick="changeCity()" title="クリックで地域を変更">${esc(w.name)}<small>WEATHER</small></div>
     <span style="font-size:30px">${ci}</span><div><div class="temp">${Math.round(wx.current.temperature_2m)}℃</div><div class="desc">${cd}</div></div></div>
     ${wx.daily.time.map((t,i)=>{if(t<today())return '';const d=new Date(t+'T00:00');return `<div class="day"><b><span class="lg">${d.toLocaleDateString('en-US',{weekday:'long'})}</span><span class="sh">${d.toLocaleDateString('en-US',{weekday:'short'})}</span></b><div class="i">${WMO(wx.daily.weather_code[i])[0]}</div>
       <div class="hi">${Math.round(wx.daily.temperature_2m_max[i])}℃</div><div class="lo">${Math.round(wx.daily.temperature_2m_min[i])}℃</div></div>`}).join('')}`;
