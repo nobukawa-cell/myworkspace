@@ -47,6 +47,9 @@ main{min-width:0}
 .page{max-width:1080px;margin:0 auto;padding:36px 40px 80px}
 .hero{height:220px;border-radius:0 0 var(--radius) var(--radius);background-size:cover;background-position:center;position:relative}
 .hero{overflow:hidden}
+.hero.blend-fade{border-radius:0;-webkit-mask-image:linear-gradient(to bottom,#000 45%,transparent);mask-image:linear-gradient(to bottom,#000 45%,transparent)}
+.hero.blend-fade .hero-btns{top:14px;bottom:auto}
+.hero.blend-bg{background:none!important;border-radius:0}
 .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;transition:none}
 .hero-btns{position:absolute;right:16px;bottom:14px;display:flex;gap:6px;opacity:0;transition:.2s;z-index:2}
 .hero:hover .hero-btns{opacity:1}
@@ -640,11 +643,16 @@ function applyBg(){
 const hex2=h=>{const n=parseInt(h.slice(1),16);return [n>>16,n>>8&255,n&255]};
 const rgb2=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
 const mix=(a,b,t)=>{const x=hex2(a),y=hex2(b);return rgb2(x.map((v,i)=>v+(y[i]-v)*t))};
-function curImg(){const I=S.settings.bgImg||{},k=bgKey();return k in I?I[k]:I['*']||null}
+function curImg(){if(route.v==='cat'){const c=cat(route.id);if(c?.blend==='bg'&&c.cover){const ok=c.coverToneSrc===c.cover;if(!ok)coverToneOf(c);return {src:c.cover,css:isPhoto(c.cover)?`url('${c.cover}')`:bg(c.cover),tone:ok&&c.coverTone||'#c8c8c8',fade:c.blendFade||0,cat:1}}}
+  const I=S.settings.bgImg||{},k=bgKey();return k in I?I[k]:I['*']||null}
+const toneBusy={};
+function coverToneOf(c){const src=c.cover;if(toneBusy[src])return;toneBusy[src]=1;
+  if(!isPhoto(src)){const m=src.match(/#[0-9a-f]{6}/gi)||['#c8c8c8'];const a=m.map(hex2);c.coverTone=rgb2([0,1,2].map(i=>a.reduce((s,x)=>s+x[i],0)/a.length));c.coverToneSrc=src;delete toneBusy[src];save(true);paintBg();return}
+  const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{try{c.coverTone=avgTone(im);c.coverToneSrc=src;save(true);paintBg()}catch(e){c.coverToneSrc=src}};im.src=src}
 function paintBg(){S.settings.bg??={};const m=$('#main'),side=$('#side'),tab=$('#tabbar');
   const c=S.settings.bg[bgKey()]||'',im=curImg();let tone=c;
   if(im){const f=im.fade||0,dk=lum(im.tone)<.3,ov=dk?'0,0,0':'255,255,255';
-    m.style.backgroundImage=(f?`linear-gradient(rgba(${ov},${f}),rgba(${ov},${f})),`:'')+`url('${im.src}')`;m.classList.add('hasimg');
+    m.style.backgroundImage=(f?`linear-gradient(rgba(${ov},${f}),rgba(${ov},${f})),`:'')+(im.css||`url('${im.src}')`);m.classList.add('hasimg');
     tone=mix(im.tone,dk?'#000000':'#ffffff',f);m.style.backgroundColor=tone}
   else{m.style.backgroundImage='';m.classList.remove('hasimg');m.style.backgroundColor=c}
   const dark=!!tone&&lum(tone)<.25;m.classList.toggle('darkbg',dark);
@@ -656,6 +664,7 @@ function avgTone(cv){const t=document.createElement('canvas');t.width=t.height=1
 function setImg(v,quiet){S.settings.bgImg??={};const k=bgKey();if(v===undefined)delete S.settings.bgImg[k];else S.settings.bgImg[k]=v;
   if(!quiet){save();paintBg();const kk=bgKind;$('#bgpop')?.remove();toggleBgPop(kk)}}
 function pickBgImg(){pickImage((src,cv)=>{setImg({src,tone:avgTone(cv),fade:0})},1920,.78)}
+function setBlend(k){const c=cat(route.id);c.blend=k;save();render();toggleBgPop()}
 function bgFade(f){const im=curImg();if(!im)return;setImg({...im,fade:f})}
 function bgAll(){const im=curImg();if(!im)return;S.settings.bgImg={'*':im};save();paintBg();toast('すべてのページの背景にしました')}
 const WX_SWATCHES=['','#ffffff','#f3ede4','#e7eef6','#e6efe9','#f6e9e6','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#4a6fa5','#6b8f71','#b5835a','#c46a5a','#7a5c8e','#0e3b5c','#000000'];
@@ -674,7 +683,11 @@ function toggleBgPop(kind='page'){
     ${wx?`<div style="font-size:12px;margin-top:8px">背景になじませる</div><div class="r" style="margin:6px 0 2px;gap:6px">${[['clear','透明'],['glass','すりガラス']].map(([k,l])=>`<button class="mini-btn ${cur===k?'on':''}" onclick="event.stopPropagation();setBg('${k}')">${l}</button>`).join('')}</div>`:''}
     <div class="sw">${sw.map(c=>`<button title="${c||'標準'}" class="${c===cur?'on':''}" style="background:${c||(wx?'#1b1b1b':'linear-gradient(135deg,#f6f3ee 50%,#1c1b19 50%)')}" onclick="event.stopPropagation();setBg('${c}')"></button>`).join('')}</div>
     <div class="r"><input type="color" value="${/^#/.test(cur)?cur:(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div>
-    ${wx?'':(()=>{const im=curImg();return `<div class="bgimg"><b style="font-size:13px">背景画像</b>
+    ${!wx&&route.v==='cat'?(()=>{const c=cat(route.id),b=c.blend||'';return `<div class="bgimg"><b style="font-size:13px">バナーと背景</b>
+      <div class="r" style="margin-top:8px;gap:6px">${[['','分ける'],['fade','なじませる'],['bg','背景にする']].map(([k,l])=>`<button class="mini-btn ${b===k?'on':''}" onclick="event.stopPropagation();setBlend('${k}')">${l}</button>`).join('')}</div>
+      <div style="font-size:11.5px;color:#888;margin-top:6px;line-height:1.6">${b==='fade'?'バナーの下の方がふわっと背景に溶けこみます':b==='bg'?'バナーの画像がページ全体の背景になります':'バナーと背景を別々に表示します'}</div>
+      ${b==='bg'?`<div style="font-size:12px;margin-top:10px">文字を読みやすく</div><div class="r" style="margin-top:6px;gap:6px">${[[0,'なし'],[.3,'うすく'],[.55,'しっかり']].map(([f,l])=>`<button class="mini-btn ${(c.blendFade||0)===f?'on':''}" onclick="event.stopPropagation();cat(route.id).blendFade=${f};save();paintBg();toggleBgPop();toggleBgPop()">${l}</button>`).join('')}</div>`:''}</div>`})():''}
+    ${wx||curImg()?.cat?'':(()=>{const im=curImg();return `<div class="bgimg"><b style="font-size:13px">背景画像</b>
       ${im?`<div class="thumb" style="background-image:url('${im.src}')"></div>`:''}
       <div class="r" style="flex-wrap:wrap;gap:6px"><button class="mini-btn" onclick="event.stopPropagation();pickBgImg()">🖼 ${im?'画像を変更':'画像を選ぶ'}</button>
       ${im?`<button class="mini-btn" onclick="event.stopPropagation();setImg(null)">外す</button>`:''}</div>
@@ -875,9 +888,10 @@ function pCat(){
 const isPhoto=v=>!!v&&!/^(linear|radial)-gradient/.test(v);
 function coverPos(c){return Object.assign({x:50,y:50,z:100,h:220},c.coverPos||{})}
 function heroHTML(c){const p=coverPos(c),photo=isPhoto(c.cover);
-  return `<div class="hero" id="hero" data-cat="${c.id}" style="height:${p.h}px;${photo?'':`background-image:${bg(c.cover)}`}">
-    ${photo?`<img class="hero-img" src="${esc(c.cover)}" alt="" draggable="false" style="object-position:${p.x}% ${p.y}%;transform:scale(${p.z/100});transform-origin:${p.x}% ${p.y}%">`:''}
-    <div class="hero-btns"><button onclick="editCat('${c.id}')">カバーを変更</button>${photo?`<button onclick="startRepos()">位置を調整</button>`:''}<button onclick="startRepos(true)">高さを調整</button></div>
+  const bl=c.blend||'';
+  return `<div class="hero ${bl?'blend-'+bl:''}" id="hero" data-cat="${c.id}" style="height:${p.h}px;${photo&&bl!=='bg'?'':bl==='bg'?'':`background-image:${bg(c.cover)}`}">
+    ${photo&&bl!=='bg'?`<img class="hero-img" src="${esc(c.cover)}" alt="" draggable="false" style="object-position:${p.x}% ${p.y}%;transform:scale(${p.z/100});transform-origin:${p.x}% ${p.y}%">`:''}
+    <div class="hero-btns"><button onclick="editCat('${c.id}')">カバーを変更</button>${photo&&bl!=='bg'?`<button onclick="startRepos()">位置を調整</button>`:''}<button onclick="startRepos(true)">高さを調整</button></div>
   </div>`}
 let repos=null;
 function startRepos(heightOnly){
