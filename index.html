@@ -204,7 +204,7 @@ main.darkbg .col{background:rgba(255,255,255,.06)}
 .mini-btn{white-space:nowrap;font-size:12px;padding:4px 10px;border-radius:14px;background:#f1ebe2;color:#2b2a28}.mini-btn.on{background:#b5835a;color:#fff}
 main.hasimg{background-size:cover;background-position:center;background-attachment:fixed;background-repeat:no-repeat}
 main.darkbg .lead,main.darkbg .greet{text-shadow:0 1px 8px rgba(0,0,0,.35)}
-aside,.tabbar{transition:background-color .3s}
+
 aside.darkside,.tabbar.darkside{--text:#f2efe9;--sub:#c9c2b6;--line:rgba(255,255,255,.14);--accent-soft:rgba(255,255,255,.13);color:var(--text)}
 @media (max-width:760px){main.hasimg{background-attachment:scroll}}
 .bgpop .r{display:flex;align-items:center;gap:8px;font-size:12px}
@@ -657,7 +657,7 @@ function applyBg(){
 const hex2=h=>{const n=parseInt(h.slice(1),16);return [n>>16,n>>8&255,n&255]};
 const rgb2=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
 const mix=(a,b,t)=>{const x=hex2(a),y=hex2(b);return rgb2(x.map((v,i)=>v+(y[i]-v)*t))};
-function curImg(){if(route.v==='cat'){const c=cat(route.id);if(c?.blend==='bg'&&c.cover){const ok=c.coverToneSrc===c.cover;if(!ok)coverToneOf(c);return {src:c.cover,css:isPhoto(c.cover)?`url('${c.cover}')`:bg(c.cover),tone:ok&&c.coverTone||'#c8c8c8',fade:c.blendFade||0,cat:1}}}
+function curImg(){if(route.v==='cat'||route.v==='today'){const c=pobj(bgKey());if(c?.blend==='bg'&&c.cover){const ok=c.coverToneSrc===c.cover;if(!ok)coverToneOf(c);return {src:c.cover,css:isPhoto(c.cover)?`url('${c.cover}')`:bg(c.cover),tone:ok&&c.coverTone||'#c8c8c8',fade:c.blendFade||0,cat:1}}}
   const I=S.settings.bgImg||{},k=bgKey();return k in I?I[k]:I['*']||null}
 const toneBusy={};
 function coverToneOf(c){const src=c.cover;if(toneBusy[src])return;toneBusy[src]=1;
@@ -678,7 +678,10 @@ function avgTone(cv){const t=document.createElement('canvas');t.width=t.height=1
 function setImg(v,quiet){S.settings.bgImg??={};const k=bgKey();if(v===undefined)delete S.settings.bgImg[k];else S.settings.bgImg[k]=v;
   if(!quiet){save();paintBg();const kk=bgKind;$('#bgpop')?.remove();toggleBgPop(kk)}}
 function pickBgImg(){pickImage((src,cv)=>{setImg({src,tone:avgTone(cv),fade:0})},1920,.78)}
-function setBlend(k){const c=cat(route.id);c.blend=k;save();render();toggleBgPop()}
+const HERO_PAGES={today:()=>COVERS[7]};
+function pobj(id){const c=cat(id);if(c)return c;S.settings.pages??={};const P=S.settings.pages;if(!P[id])P[id]={id,cover:HERO_PAGES[id]?.()||COVERS[0]};P[id].id=id;return P[id]}
+function changeCover(id){pickImage(src=>{const o=pobj(id);o.cover=src;delete o.coverPos;save();render()},1920,.8)}
+function setBlend(k){const c=pobj(bgKey());c.blend=k;save();render();toggleBgPop()}
 function bgFade(f){const im=curImg();if(!im)return;setImg({...im,fade:f})}
 function bgAll(){const im=curImg();if(!im)return;S.settings.bgImg={'*':im};save();paintBg();toast('すべてのページの背景にしました')}
 const WX_SWATCHES=['','#ffffff','#f3ede4','#e7eef6','#e6efe9','#f6e9e6','#2b2a28','#1f2a37','#233127','#3b2f2a','#2e2a3b','#4a6fa5','#6b8f71','#b5835a','#c46a5a','#7a5c8e','#0e3b5c','#000000'];
@@ -697,10 +700,11 @@ function toggleBgPop(kind='page'){
     ${wx?`<div style="font-size:12px;margin-top:8px">背景になじませる</div><div class="r" style="margin:6px 0 2px;gap:6px">${[['clear','透明'],['glass','すりガラス']].map(([k,l])=>`<button class="mini-btn ${cur===k?'on':''}" onclick="event.stopPropagation();setBg('${k}')">${l}</button>`).join('')}</div>`:''}
     <div class="sw">${sw.map(c=>`<button title="${c||'標準'}" class="${c===cur?'on':''}" style="background:${c||(wx?'#1b1b1b':'linear-gradient(135deg,#f6f3ee 50%,#1c1b19 50%)')}" onclick="event.stopPropagation();setBg('${c}')"></button>`).join('')}</div>
     <div class="r"><input type="color" value="${/^#/.test(cur)?cur:(wx?'#1b1b1b':'#f6f3ee')}" oninput="setBg(this.value,true)">好きな色を選ぶ<span style="flex:1"></span><a href="#" style="color:#b5835a" onclick="event.stopPropagation();setBg('');return false">元に戻す</a></div>
-    ${!wx&&route.v==='cat'?(()=>{const c=cat(route.id),b=c.blend||'';return `<div class="bgimg"><b style="font-size:13px">バナーと背景</b>
+    ${!wx&&(route.v==='cat'||route.v==='today')?(()=>{const c=pobj(bgKey()),b=c.blend||'';return `<div class="bgimg"><b style="font-size:13px">バナーと背景</b>
+      <div class="r" style="margin-top:8px;gap:6px"><button class="mini-btn" onclick="event.stopPropagation();changeCover(bgKey())">🖼 バナー画像を変更</button>${route.v==='today'&&isPhoto(c.cover)?`<button class="mini-btn" onclick="event.stopPropagation();pobj('today').cover=COVERS[7];save();render()">元に戻す</button>`:''}</div>
       <div class="r" style="margin-top:8px;gap:6px">${[['','分ける'],['fade','なじませる'],['bg','背景にする']].map(([k,l])=>`<button class="mini-btn ${b===k?'on':''}" onclick="event.stopPropagation();setBlend('${k}')">${l}</button>`).join('')}</div>
       <div style="font-size:11.5px;color:#888;margin-top:6px;line-height:1.6">${b==='fade'?'バナーの下の方がふわっと背景に溶けこみます':b==='bg'?'バナーの画像がページ全体の背景になります':'バナーと背景を別々に表示します'}</div>
-      ${b==='bg'?`<div style="font-size:12px;margin-top:10px">文字を読みやすく</div><div class="r" style="margin-top:6px;gap:6px">${[[0,'なし'],[.3,'うすく'],[.55,'しっかり']].map(([f,l])=>`<button class="mini-btn ${(c.blendFade||0)===f?'on':''}" onclick="event.stopPropagation();cat(route.id).blendFade=${f};save();paintBg();toggleBgPop();toggleBgPop()">${l}</button>`).join('')}</div>`:''}</div>`})():''}
+      ${b==='bg'?`<div style="font-size:12px;margin-top:10px">文字を読みやすく</div><div class="r" style="margin-top:6px;gap:6px">${[[0,'なし'],[.3,'うすく'],[.55,'しっかり']].map(([f,l])=>`<button class="mini-btn ${(c.blendFade||0)===f?'on':''}" onclick="event.stopPropagation();pobj(bgKey()).blendFade=${f};save();paintBg();toggleBgPop();toggleBgPop()">${l}</button>`).join('')}</div>`:''}</div>`})():''}
     ${wx||curImg()?.cat?'':(()=>{const im=curImg();return `<div class="bgimg"><b style="font-size:13px">背景画像</b>
       ${im?`<div class="thumb" style="background-image:url('${im.src}')"></div>`:''}
       <div class="r" style="flex-wrap:wrap;gap:6px"><button class="mini-btn" onclick="event.stopPropagation();pickBgImg()">🖼 ${im?'画像を変更':'画像を選ぶ'}</button>
@@ -850,7 +854,7 @@ function fitNotes(){const b=$('#notes');if(b)b.style.height=Math.max(220,...S.me
 function pToday(){
   const ts=S.tasks.filter(t=>t.status!=='done'&&t.due&&t.due<=today()).sort((a,b)=>a.due.localeCompare(b.due));
   const done=S.tasks.filter(t=>t.status==='done'&&t.due===today());
-  $('#main').innerHTML=`<div class="hero" style="background-image:${COVERS[7]}"></div><div class="page">
+  $('#main').innerHTML=`${heroHTML(pobj('today'))}<div class="page">
     <div class="page-icon">☀️</div><h1 class="title en" style="font-size:40px">Today</h1>
     <p class="lead">今日が期限のタスクと、期限切れのタスク</p>
     ${listHTML(ts,'今日やるべきタスクはありません 🎉')}
@@ -905,11 +909,11 @@ function heroHTML(c){const p=coverPos(c),photo=isPhoto(c.cover);
   const bl=c.blend||'';
   return `<div class="hero ${bl?'blend-'+bl:''}" id="hero" data-cat="${c.id}" style="height:${p.h}px;${photo&&bl!=='bg'?'':bl==='bg'?'':`background-image:${bg(c.cover)}`}">
     ${photo&&bl!=='bg'?`<img class="hero-img" src="${esc(c.cover)}" alt="" draggable="false" style="object-position:${p.x}% ${p.y}%;transform:scale(${p.z/100});transform-origin:${p.x}% ${p.y}%">`:''}
-    <div class="hero-btns"><button onclick="editCat('${c.id}')">カバーを変更</button>${photo&&bl!=='bg'?`<button onclick="startRepos()">位置を調整</button>`:''}<button onclick="startRepos(true)">高さを調整</button></div>
+    <div class="hero-btns"><button onclick="${cat(c.id)?`editCat('${c.id}')`:`changeCover('${c.id}')`}">カバーを変更</button>${photo&&bl!=='bg'?`<button onclick="startRepos()">位置を調整</button>`:''}<button onclick="startRepos(true)">高さを調整</button></div>
   </div>`}
 let repos=null;
 function startRepos(heightOnly){
-  const h=$('#hero'),c=cat(h.dataset.cat),img=h.querySelector('.hero-img');repos={c,p:coverPos(c),orig:{...coverPos(c)}};const p=repos.p;
+  const h=$('#hero'),c=pobj(h.dataset.cat),img=h.querySelector('.hero-img');repos={c,p:coverPos(c),orig:{...coverPos(c)}};const p=repos.p;
   h.classList.add('repos');
   h.insertAdjacentHTML('beforeend',`${img&&!heightOnly?'<div class="repos-hint">ドラッグして見せたい位置に動かす</div>':''}
     <div class="repos-bar">
